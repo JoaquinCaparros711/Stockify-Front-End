@@ -8,19 +8,15 @@ import Branchs from './components/pages/Branchs';
 
 function App() {
   return (
-    <Router>
-      <div className='flex'>
-        <SideBar />
-        <div className='content w-100'>
-          <NavBar />
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/products' element={<Products />} />
-            <Route path='/branchs' element={<Branchs />} />
-          </Routes>
-        </div>
-      </div>
-    </Router>
+    <>
+      <Router>
+        <NavBar />
+        <Routes>
+          <Route path='/' exact Component={Home}/>
+          <Route path='/products' Component={Products}/>
+        </Routes>
+      </Router>
+    </>
   );
 }
 

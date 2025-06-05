@@ -1,30 +1,92 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import * as FaIcons from 'react-icons/fa';
+import * as AiIcons from 'react-icons/ai';
+import { SideBarData } from './SideBarData';
+import './Navbar.css';
+import { IconContext } from 'react-icons/lib';
+import { FaUserCircle } from 'react-icons/fa';
 
 const NavBar = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+    const userMenuRef = useRef(null);
+
+    const toggleSidebar = () => setIsOpen(!isOpen);
+    const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
+
+    const handleLogout = () => {
+        console.log("Cerrar sesión clickeado");
+        setIsUserMenuOpen(false);
+    };
+
+    const handleProfile = () => {
+        console.log("Perfil clickeado");
+        setIsUserMenuOpen(false);
+    };
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setIsUserMenuOpen(false);
+            }
+        }
+
+        if (isUserMenuOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isUserMenuOpen]);
+
     return (
-        <div>
-            <nav className="navbar navbar-expand-lg bg-body-tertiary">
-                <div className="container-fluid">
-                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-                    <span className="navbar-toggler-icon"></span>
-                    </button>
-                    <div className="collapse navbar-collapse" id="navbarNavDropdown">
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item dropdown">
-                            <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Joaquín Caparros
-                            </a>
-                            <ul className="dropdown-menu dropdown-menu-end">
-                                <li><a className="dropdown-item" href="#">Mi perfil</a></li>
-                                <li><a className="dropdown-item" href="#">Cerrar sesión</a></li>
-                            </ul>
-                        </li>
-                    </ul>
+        <>
+            <IconContext.Provider value={{ color: '#ef9327', size: '24px' }}>
+                <div className="navbar">
+                    <Link to="#" className="menu-bars" onClick={toggleSidebar}>
+                        <FaIcons.FaBars />
+                    </Link>
+
+                    <div className="user-menu-container" ref={userMenuRef}>
+                        <FaUserCircle className="user-icon" onClick={toggleUserMenu} />
+                        {isUserMenuOpen && (
+                            <div className="dropdown-menu">
+                                <Link to="/profile" className="dropdown-item" onClick={handleProfile}>
+                                    Perfil
+                                </Link>
+                                <button className="dropdown-item" onClick={handleLogout}>
+                                    Cerrar sesión
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </nav>
-        </div>
-    )
-}
 
-export default NavBar
+                <nav className={isOpen ? 'nav-menu active' : 'nav-menu'}>
+                    <ul className="nav-menu-items">
+                        <li className="navbar-toggle">
+                            <Link to="#" className="menu-close" onClick={toggleSidebar}>
+                                <AiIcons.AiOutlineClose />
+                            </Link>
+                        </li>
+                        {SideBarData.map((item, index) => {
+                            return (
+                                <li key={index} className={item.cName}>
+                                    <Link to={item.path} onClick={toggleSidebar}>
+                                        {item.icon}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
+            </IconContext.Provider>
+        </>
+    );
+};
+
+export default NavBar;
