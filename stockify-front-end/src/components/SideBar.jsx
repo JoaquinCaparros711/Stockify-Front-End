@@ -1,31 +1,38 @@
-import React from 'react'
-import {NavLink} from 'react-router-dom';
-import { RxHamburgerMenu} from "react-icons/rx";
-import { MdOutlineAddHomeWork } from "react-icons/md";
-import { MdOutlineProductionQuantityLimits } from "react-icons/md";
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { sidebarItems, logoutItem } from '../data/sidebarData.js';
+import './SideBar.css';
 
 const SideBar = () => {
-    return (
-        <div className='sidebar bg-light'>
-            <ul>
-                <li>
-                    <NavLink to="/" exact className='text-dark rounded py-2 w-100 d-inline-block px-3' activeClassName="active">
-                        <RxHamburgerMenu className='me-2'/> Inicio
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/products" exact className='text-dark rounded py-2 w-100 d-inline-block px-3' activeClassName="active">
-                        <MdOutlineProductionQuantityLimits className='me-2' /> Productos
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/branchs" exact className='text-dark rounded py-2 w-100 d-inline-block px-3' activeClassName="active">
-                        <MdOutlineAddHomeWork className='me-2' /> Clientes
-                    </NavLink>
-                </li>
-            </ul>
-        </div>
-    )
-}
+  return (
+    <div className="sidebar">
+      <div className="sidebar-logo">
+        Stockify
+      </div>
+      <nav className="sidebar-nav">
+        <ul>
+          {sidebarItems.map((item, index) => (
+            item.type === 'heading' ? (
+              <li key={index} className="nav-heading">{item.text}</li>
+            ) : (
+              <li key={index}>
+                <NavLink to={item.path} className="nav-link">
+                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-text">{item.text}</span>
+                </NavLink>
+              </li>
+            )
+          ))}
+        </ul>
+      </nav>
+      <div className="sidebar-footer">
+        <a href="#logout" className="nav-link">
+            <span className="nav-icon">{logoutItem.icon}</span>
+            <span className="nav-text">{logoutItem.text}</span>
+        </a>
+      </div>
+    </div>
+  );
+};
 
-export default SideBar
+export default SideBar;
