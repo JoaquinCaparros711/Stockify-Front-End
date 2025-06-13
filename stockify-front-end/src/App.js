@@ -1,26 +1,36 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// IMPORTANTE: Cambiamos la ruta de SideBar a la carpeta 'components'
-import SideBar from './components/SideBar.jsx';
-import NavBar from './components/NavBar.jsx';
-import Home from './components/pages/Home.jsx';
+import { AuthProvider } from './context/AuthContext';
+import 'bootstrap/scss/bootstrap.scss'
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Layouts y Páginas
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/pages/Login';
+import Register from './components/pages/Register';
+import Home from './components/pages/Home';
+import Products from './components/pages/Products';
 import './App.css'; 
-import Products from './components/pages/Products.jsx';
 
 function App() {
   return (
     <Router>
-      <div className="app-container">
-        <SideBar />
-        <div className="main-content">
-          <main className="content-area">
-            <Routes>
-              <Route path="/" element={<Home />} /> 
-              <Route path="/productos" element={<Products />} /> 
-            </Routes>
-          </main>
-        </div>
-      </div>
+      {/* 2. <AuthProvider> está DENTRO del Router */}
+      <AuthProvider>
+        <Routes>
+          {/* Rutas Públicas */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Rutas Privadas */}
+          <Route path="/*" element={<ProtectedRoute />}>
+            {/* Estas son las rutas que estarán dentro del layout principal */}
+            <Route index element={<Home />} /> {/* Usamos 'index' para la ruta raíz anidada */}
+            <Route path="productos" element={<Products />} />
+            {/* Añade aquí más rutas protegidas... */}
+          </Route>
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 }

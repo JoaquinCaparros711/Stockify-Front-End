@@ -1,90 +1,95 @@
 import React from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { BsHouse, BsCheckCircleFill, BsCalendarEvent, BsHourglassSplit } from 'react-icons/bs';
+import { Container, Row, Col, Card, Button, Table, Badge } from 'react-bootstrap';
+import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsArrowRight } from 'react-icons/bs';
+import VentasChart from '../../components/VentasChart'; // Importamos el gráfico
 
-
-const StatusCard = ({ icon, title, value, detail }) => (
-    <Col md={4} className="mb-3">
-        <div className="d-flex align-items-center bg-warning text-dark p-3 rounded h-100">
-            <div className="fs-1 me-3">{icon}</div>
-            <div>
-                <div className="fw-bold">{title}</div>
-                <div className="fs-5">{value}</div>
-                {detail && <div className="text-muted small">{detail}</div>}
-            </div>
-        </div>
-    </Col>
+// Un nuevo componente de tarjeta para los indicadores (KPIs)
+const KpiCard = ({ title, value, icon, color }) => (
+    // LA SOLUCIÓN ESTÁ AQUÍ: Añadimos la clase h-100 a la tarjeta
+    <Card className={`shadow-sm border-start border-5 border-${color} h-100`}>
+        <Card.Body>
+            <Row className="align-items-center">
+                <Col xs="auto">
+                    <div className={`p-3 rounded-circle bg-${color}-light`}>
+                        {icon}
+                    </div>
+                </Col>
+                <Col>
+                    <h6 className={`text-muted mb-1 text-${color}`}>{title}</h6>
+                    <h4 className="fw-bold mb-0">{value}</h4>
+                </Col>
+            </Row>
+        </Card.Body>
+    </Card>
 );
 
 const Home = () => {
+    // Datos de ejemplo para la tabla de bajo stock
+    const lowStockProducts = [
+        { id: 1, name: 'Remera Champion', stock: 4, supplier: 'Indumentaria Cool' },
+        { id: 2, name: 'Juego de Alicates', stock: 2, supplier: 'Ferre Max' },
+        { id: 3, name: 'Membrana Líquida', stock: 8, supplier: 'Weber' },
+    ];
+
     return (
         <Container fluid>
             {/* Cabecera de la página */}
-            <header className="d-flex align-items-center mb-4">
-                <div className="p-3 rounded-circle bg-light me-3">
-                    <BsHouse size={28} className="text-primary"/>
-                </div>
+            <header className="d-flex align-items-center justify-content-between mb-4">
                 <div>
-                    <h1 className="h3 mb-0">Inicio</h1>
-                    <p className="text-muted mb-0">Podrá ver el estado de su cuenta y realizar el pago del programa</p>
+                    <h1 className="h3 mb-0">Dashboard</h1>
+                    <p className="text-muted mb-0">Resumen de la actividad de tu negocio.</p>
                 </div>
+                {/* ACCESO RÁPIDO PRINCIPAL */}
+                <Button variant="primary" className="shadow-sm">
+                    <BsPlus size={24} className="me-1" />
+                    Crear Venta
+                </Button>
             </header>
 
-            {/* Tarjeta de Estado de la cuenta */}
-            <Card className="mb-4 shadow-sm">
-                <Card.Header as="h5" className="bg-light">Estado de la cuenta</Card.Header>
-                <Card.Body>
-                    <Row>
-                        <StatusCard 
-                            icon={<BsCheckCircleFill />}
-                            title="Estado"
-                            value="Prueba"
-                        />
-                        <StatusCard 
-                            icon={<BsCalendarEvent />}
-                            title="Último pago"
-                            value="..."
-                        />
-                        <StatusCard 
-                            icon={<BsHourglassSplit />}
-                            title="Vencimiento"
-                            value="15-06-2025"
-                            detail="(9 Días restantes)"
-                        />
-                    </Row>
-                </Card.Body>
-            </Card>
+            {/* KPIs - Indicadores Clave de Desempeño */}
+            <Row className="mb-4">
+                <Col md={6} xl={3} className="mb-3"><KpiCard title="Total de Productos" value="152" icon={<BsBoxSeam size={28} />} color="primary" /></Col>
+                <Col md={6} xl={3} className="mb-3"><KpiCard title="Ventas del Mes" value="$ 124,850" icon={<BsCashCoin size={28} />} color="success" /></Col>
+                <Col md={6} xl={3} className="mb-3"><KpiCard title="Productos con Bajo Stock" value="8" icon={<BsArrowDownCircle size={28} />} color="warning" /></Col>
+                <Col md={6} xl={3} className="mb-3"><KpiCard title="Total de Clientes" value="43" icon={<BsPeople size={28} />} color="info" /></Col>
+            </Row>
 
-            {/* Tarjetas inferiores */}
+            {/* Fila principal con Gráfico y Tabla */}
             <Row>
-                <Col lg={7} className="mb-4">
-                    <Card className="h-100 shadow-sm">
-                        <Card.Header as="h5" className="bg-light">Sistema Stock Web</Card.Header>
+                <Col xl={8} className="mb-4">
+                    <Card className="shadow-sm h-100">
                         <Card.Body>
-                            <Card.Title>Completo</Card.Title>
-                            <div className="d-flex justify-content-between align-items-center border-bottom py-2">
-                                <span>Precio</span>
-                                <span className="fw-bold text-primary fs-5">$30.000</span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center pt-2">
-                                <span>Extender</span>
-                                <Button variant="link" className="text-success fw-bold">+30 Días</Button>
-                            </div>
+                            <VentasChart />
                         </Card.Body>
                     </Card>
                 </Col>
-                <Col lg={5} className="mb-4">
-                    <Card className="h-100 shadow-sm">
-                        <Card.Header as="h5" className="bg-light">Comunicados</Card.Header>
-                        <Card.Body style={{maxHeight: '300px', overflowY: 'auto'}}>
-                            <div className="mb-3">
-                                <small className="text-muted">Hace 2 semanas</small>
-                                <p>
-                                    La aplicación de <strong>Mercado Pago ya está funcional</strong>, si tienen algún
-                                    inconveniente con los pagos comuníquense con <strong>atención al cliente</strong>.
-                                </p>
-                            </div>
+
+                <Col xl={4} className="mb-4">
+                    <Card className="shadow-sm h-100">
+                        <Card.Header as="h5" className="bg-light">Productos con Bajo Stock</Card.Header>
+                        <Card.Body>
+                            <Table striped hover size="sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {lowStockProducts.map(product => (
+                                        <tr key={product.id}>
+                                            <td>{product.name}</td>
+                                            <td><Badge bg="danger">{product.stock}</Badge></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
                         </Card.Body>
+                        <Card.Footer className="text-center">
+                            <Button variant="outline-primary" size="sm">
+                                Ver todos <BsArrowRight />
+                            </Button>
+                        </Card.Footer>
                     </Card>
                 </Col>
             </Row>
