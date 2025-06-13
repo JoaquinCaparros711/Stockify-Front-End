@@ -1,0 +1,96 @@
+/* --- ANIMACIÓN DE ENTRADA --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.branches-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- ESTILOS DE CABECERA (consistente con otras páginas) --- */
+.page-header {
+    margin-bottom: 2.5rem;
+}
+.page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #142331;
+}
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+.btn-add-branch {
+    background-color: #3498db;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.btn-add-branch:hover {
+    background-color: #34495e;
+}
+
+
+/* --- NUEVO DISEÑO PARA LA TABLA DE SUCURSALES --- */
+.branches-table-card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.branches-table thead th {
+    border: none !important;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 1rem 1.5rem;
+}
+.branches-table thead th:first-child {
+    border-top-left-radius: 0.75rem;
+}
+.branches-table thead th:last-child {
+    border-top-right-radius: 0.75rem;
+}
+
+.branches-table tbody tr {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.branches-table tbody tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.06);
+    z-index: 2;
+    position: relative;
+}
+
+.branches-table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Estilos para los botones de acción en la tabla */
+.action-btn {
+    background-color: #f1f3f5;
+    border: none;
+    color: #495057;
+    transition: background-color 0.2s;
+}
+.action-btn:hover {
+    background-color: #dee2e6;
+    color: #212529;
+}
+.action-btn-danger:hover {
+    background-color: #dc3545;
+    color: white;
+}

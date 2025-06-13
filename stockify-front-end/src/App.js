@@ -11,6 +11,10 @@ import Register from './components/pages/Register';
 import Home from './components/pages/Home';
 import Products from './components/pages/Products';
 import './App.css'; 
+import Movements from './components/pages/Movement';
+import Stock from './components/pages/Stock';
+import Branchs from './components/pages/Branchs';
+import Users from './components/pages/Users';
 
 function App() {
   return (
@@ -27,7 +31,10 @@ function App() {
             {/* Estas son las rutas que estarán dentro del layout principal */}
             <Route index element={<Home />} /> {/* Usamos 'index' para la ruta raíz anidada */}
             <Route path="productos" element={<Products />} />
-            {/* Añade aquí más rutas protegidas... */}
+            <Route path="movimientos" element={<Movements />} />
+            <Route path="stock" element={<Stock />} />
+            <Route path="sucursales" element={<Branchs />} />
+            <Route path="usuarios" element={<Users />} />
           </Route>
         </Routes>
       </AuthProvider>

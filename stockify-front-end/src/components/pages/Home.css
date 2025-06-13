@@ -1,20 +1,104 @@
+/* -- ESTILOS GENERALES DEL DASHBOARD -- */
+.dashboard-header {
+  margin-bottom: 2.5rem; /* Más espacio después de la cabecera */
+}
 
+/* Títulos con tipografía moderna */
+.dashboard-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #142331;
+}
 
-.create-sale {
+.dashboard-subtitle {
+  font-size: 1.1rem;
+  color: #6c757d;
+}
+
+/* -- NUEVO DISEÑO PARA LAS TARJETAS KPI -- */
+.kpi-card {
+  background-color: #ffffff;
+  border: none;
+  border-radius: 0.75rem; /* Bordes más redondeados */
+  padding: 1.5rem;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
+}
+
+.kpi-icon-wrapper {
+  margin-bottom: 1rem;
+}
+
+.kpi-title {
+  font-size: 1rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #142331;
+}
+
+/* -- NUEVO DISEÑO PARA LA TABLA DE BAJO STOCK -- */
+.low-stock-card, .chart-card {
+  border: none;
+  border-radius: 0.75rem;
+}
+
+.low-stock-table {
+  border-collapse: separate;
+  border-spacing: 0 0.5rem; /* Espacio vertical entre filas */
+}
+
+.low-stock-table thead th {
+  border: none !important;
+  color: #6c757d;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  padding-bottom: 0.5rem;
+}
+
+.low-stock-table tbody tr {
+  background-color: #f8f9fa; /* Fondo sutil para cada fila */
+  border-radius: 0.5rem;
+}
+
+.low-stock-table tbody td {
+  border: none !important;
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.low-stock-table tbody td:first-child {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+.low-stock-table tbody td:last-child {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+/* Botón "Crear Venta" con estilo más sutil */
+.btn-create-sale {
     background-color: #3498db;
     border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
 }
 
-.create-sale:hover {
-    background-color: #34495e;
-}
-
-.btn-show-all {
-    color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-show-all:hover {
-    border-color: #34495e;
+.btn-create-sale:hover {
     background-color: #34495e;
 }

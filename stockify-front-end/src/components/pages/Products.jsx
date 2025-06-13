@@ -1,126 +1,90 @@
 import React from 'react';
-import { Container, Row, Col, Button, Card, InputGroup, FormControl, Dropdown, Table, Badge, Form } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Dropdown, Table, Badge, Form } from 'react-bootstrap';
 import { BsPlus, BsBoxSeam, BsGraphUp, BsWallet2, BsThreeDotsVertical, BsPencilFill, BsTrashFill } from 'react-icons/bs';
 import "./Product.css";
 
-
 const mockProducts = [
-    { id: 1, nombre: 'Mate Imperial Calabaza', descripcion: 'Interior calabaza, forrado en cuero', stock: 30, precio: 28000, categoria: 'Mate', estado: 'Activo', sucursal: 'Depósito Central' },
-    { id: 2, nombre: 'Mate camionero Algarrobo', descripcion: 'Interior madera, virola de acero', stock: 8, precio: 14500, categoria: 'Mate', estado: 'Activo', sucursal: 'Sucursal Mendoza' },
-    { id: 3, nombre: 'Matera 100% cuero', descripcion: 'Material cuero', stock: 0, precio: 30000, categoria: 'Matera', estado: 'Inactivo', sucursal: 'Depósito Central' },
-    { id: 4, nombre: 'Lata MATERO', descripcion: 'Set de latas MATERO', stock: 15, precio: 9000, categoria: 'Lata', estado: 'Activo', sucursal: 'Sucursal Córdoba' }
+    { id: 1, name: 'Mate Imperial Calabaza', description: 'Interior calabaza, forrado en cuero', price: 28000.00, category: 'Mates', estado: 'Activo' },
+    { id: 2, name: 'Mate Camionero Algarrobo', description: 'Interior madera, virola de acero', price: 14500.00, category: 'Mates', estado: 'Activo' },
+    { id: 3, name: 'Matera 100% Cuero', description: 'Material cuero, correa ajustable', price: 30000.00, category: 'Materas', estado: 'Inactivo' },
+    { id: 4, name: 'Lata Matera "MATERO"', description: 'Set de yerbera y azucarera', price: 9000.00, category: 'Latas', estado: 'Activo' }
 ];
 
+// Usamos el mismo diseño de KpiCard que en el Home para consistencia
 const KpiCard = ({ title, value, icon, color }) => (
-    <Card className={`shadow-sm border-start border-5 border-${color} h-100`}>
-        <Card.Body>
-            <Row className="align-items-center">
-                <Col xs="auto"><div className={`p-3 rounded-circle bg-${color}-light`}>{icon}</div></Col>
-                <Col>
-                    <h6 className={`text-muted mb-1`}>{title}</h6>
-                    <h4 className={`fw-bold mb-0 text-${color}`}>{value}</h4>
-                </Col>
-            </Row>
-        </Card.Body>
-    </Card>
+    <div className="kpi-card shadow-sm">
+        <div className={`kpi-icon-wrapper text-${color}`}>{icon}</div>
+        <div>
+            <h6 className="kpi-title">{title}</h6>
+            <h3 className="kpi-value">{value}</h3>
+        </div>
+    </div>
 );
 
 const Products = () => {
     return (
-        <Container fluid>
-            <header className="d-flex align-items-center justify-content-between mb-4">
-                <div className="d-flex align-items-center">
-                    <div className="p-3 rounded bg-primary-light me-3"><BsBoxSeam size={28} className="text-primary"/></div>
-                    <div>
-                        <h1 className="h3 mb-0">Inventario</h1>
-                        <p className="text-muted mb-0">Cree un registro detallado de todos los productos disponibles en su negocio</p>
-                    </div>
+        // Contenedor principal con la animación de entrada
+        <Container fluid className="products-container">
+            <header className="d-flex align-items-center justify-content-between page-header">
+                <div>
+                    <h1 className="page-title">Catálogo de Productos</h1>
+                    <p className="page-subtitle">Administra los productos base de tu negocio.</p>
                 </div>
-                <Button variant="primary" className="shadow-sm btn-add-product"><BsPlus size={24} className="me-1" />Agregar Producto</Button>
+                <Button className="btn-add-product"><BsPlus size={22} className="me-2" />Agregar Producto</Button>
             </header>
 
             <Row className="mb-4">
-                <Col md={6} lg={3} className="mb-3"><KpiCard title="En Stock" value="152" icon={<BsBoxSeam size={28} />} color="primary" /></Col>
-                <Col md={6} lg={3} className="mb-3"><KpiCard title="Valor en Stock" value="$ 1.2M" icon={<BsWallet2 size={28} />} color="success" /></Col>
-                <Col md={6} lg={3} className="mb-3"><KpiCard title="Ganancia estimada" value="$ 350K" icon={<BsGraphUp size={28} />} color="warning" /></Col>
-                <Col md={6} lg={3} className="mb-3"><KpiCard title="Sin Stock" value="8" icon={<BsBoxSeam size={28} />} color="danger" /></Col>
+                <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos Activos" value="152" icon={<BsBoxSeam size={32} />} color="primary" /></Col>
+                <Col md={6} lg={3} className="mb-4"><KpiCard title="Valor de Catálogo" value="$4.5M" icon={<BsWallet2 size={32} />} color="success" /></Col>
+                <Col md={6} lg={3} className="mb-4"><KpiCard title="Categorías" value="8" icon={<BsGraphUp size={32} />} color="info" /></Col>
+                <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos Inactivos" value="12" icon={<BsBoxSeam size={32} />} color="secondary" /></Col>
             </Row>
 
-            {/* A PARTIR DE AQUÍ REVISÁ LA ESTRUCTURA */}
-            <Card className="shadow-sm border-0">
-                <Card.Header className="bg-white border-0 py-3">
+            <Card className="shadow-sm products-table-card">
+                <div className="products-toolbar">
                     <Row className="align-items-center">
-                        <Col xs={12} md={4}><h5 className="mb-0">Lista de productos</h5></Col>
-                        <Col xs={12} md={8} className="d-flex flex-wrap justify-content-end align-items-center">
-                            <Dropdown className="me-2 mt-2 mt-md-0">
-                                <Dropdown.Toggle variant="light" id="dropdown-visibility" className='btn-export-visibility'>Visibilidad</Dropdown.Toggle>
-                                <Dropdown.Menu><Dropdown.Item>Todos</Dropdown.Item></Dropdown.Menu>
-                            </Dropdown>
-                            <Button variant="light" className="me-2 mt-2 mt-md-0 btn-export-visibility">Exportar</Button>
-
-                            <div className="search-bar-container mt-2 mt-md-0">
-                                <FormControl
-                                    placeholder="Buscar..."
-                                    className="search-input"
-                                />
-                                <Button variant="primary" className="search-button btn-search">
-                                    Buscar
-                                </Button>
-                            </div>
-
+                        <Col xs={12} md={5}><h5 className="mb-0">Lista de productos</h5></Col>
+                        <Col xs={12} md={7} className="d-flex justify-content-end align-items-center flex-wrap">
+                            {/* Aquí puedes volver a poner tu barra de búsqueda y filtros si lo deseas */}
                         </Col>
                     </Row>
-                </Card.Header>
-                <Card.Body>
-                    <Table responsive hover>
-                        <thead>
-                            <tr>
-                                <th><Form.Check type="checkbox" /></th>
-                                <th>Nombre</th>
-                                <th>Stock</th>
-                                <th>Precio</th>
-                                <th>Categoría</th>
-                                <th>Sucursal</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
+                </div>
+                <Table responsive className="products-table">
+                    <thead>
+                        <tr>
+                            <th style={{width: '5%'}}><Form.Check type="checkbox" /></th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                            <th className="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {mockProducts.map((product) => (
+                            <tr key={product.id}>
+                                <td><Form.Check type="checkbox" /></td>
+                                <td className="product-name-cell">
+                                    <div>{product.name}</div>
+                                    <small className="text-muted">{product.description}</small>
+                                </td>
+                                <td>{product.category}</td>
+                                <td className="fw-bold">${product.price.toFixed(2)}</td>
+                                <td><Badge pill bg={product.estado === 'Activo' ? 'success' : 'secondary'}>{product.estado}</Badge></td>
+                                <td className="text-end">
+                                    <Dropdown align="end">
+                                        <Dropdown.Toggle as="button" bsPrefix="p-0" className="btn btn-link text-muted"><BsThreeDotsVertical /></Dropdown.Toggle>
+                                        <Dropdown.Menu>
+                                            <Dropdown.Item href="#"><BsPencilFill className="me-2" /> Editar Producto</Dropdown.Item>
+                                            <Dropdown.Item href="#" className="text-danger"><BsTrashFill className="me-2" /> Eliminar Producto</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {mockProducts.map((product) => (
-                                <tr key={product.id}>
-                                    <td><Form.Check type="checkbox" /></td>
-                                    <td>
-                                        <div>{product.nombre}</div>
-                                        <small className="text-muted">{product.descripcion}</small>
-                                    </td>
-                                    <td><Badge bg={product.stock > 10 ? 'success-light' : 'warning-light'} text={product.stock > 10 ? 'success' : 'warning'}>{product.stock}</Badge></td>
-                                    <td className="fw-bold">${product.precio.toFixed(2)}</td>
-                                    <td>{product.categoria}</td>
-                                    <td>{product.sucursal}</td>
-                                    <td><Badge pill bg={product.estado === 'Activo' ? 'success' : 'secondary'}>{product.estado}</Badge></td>
-                                    <td>
-                                        <Dropdown align="end">
-                                            <Dropdown.Toggle as="button" bsPrefix="p-0" className="btn btn-link text-muted"><BsThreeDotsVertical /></Dropdown.Toggle>
-                                            <Dropdown.Menu>
-                                                <Dropdown.Item href="#"><BsPencilFill className="me-2" /> Editar</Dropdown.Item>
-                                                <Dropdown.Item href="#" className="text-danger"><BsTrashFill className="me-2" /> Eliminar</Dropdown.Item>
-                                            </Dropdown.Menu>
-                                        </Dropdown>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </Card.Body>
-                <Card.Footer className="d-flex justify-content-between align-items-center bg-white border-0">
-                    <small className="text-muted">Mostrando 4 de 152 registros</small>
-                    <div>
-                        <Button className='btn-back' variant="light" size="sm">Anterior</Button>
-                        <Button variant="primary" size="sm" className="ms-2 btn-following">Siguiente</Button>
-                    </div>
-                </Card.Footer>
+                        ))}
+                    </tbody>
+                </Table>
             </Card> 
-
         </Container>
     );
 };

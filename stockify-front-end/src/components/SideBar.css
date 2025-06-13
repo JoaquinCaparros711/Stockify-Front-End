@@ -52,7 +52,7 @@
 }
 
 .nav-link:hover {
-  background-color: #34495e;
+  background-color: #3498db;
   color: white;
 }
 
@@ -126,4 +126,39 @@
   .sidebar.open ~ .sidebar-backdrop {
     display: block;
   }
+}
+
+.sidebar-footer {
+  /* Modificamos el footer para que los elementos se apilen */
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.2); /* Un fondo sutil para destacar */
+  border-radius: 8px;
+}
+
+.user-icon {
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+  color: #ecf0f1; /* Blanco suave */
+}
+
+.user-name {
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Para nombres largos */
+}
+
+/* Ajuste para el enlace de logout */
+.logout-link {
+  margin: 0 !important;
+  width: 100%;
 }

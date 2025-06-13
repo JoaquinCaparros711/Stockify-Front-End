@@ -1,0 +1,93 @@
+/* --- ANIMACIÓN DE ENTRADA --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.movements-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- ESTILOS DE CABECERA (consistente con otras páginas) --- */
+.page-header {
+    margin-bottom: 2.5rem;
+}
+.page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #142331;
+}
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+.btn-movement {
+    background-color: #3498db;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.btn-movement:hover {
+    background-color: #34495e;
+}
+
+
+/* --- NUEVO DISEÑO PARA LA TABLA DE MOVIMIENTOS --- */
+.movements-table-card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.movements-toolbar {
+    padding: 1.5rem;
+}
+
+.movements-table thead th {
+    border: none !important;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 1rem 1.5rem;
+}
+
+.movements-table tbody tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.movements-table tbody tr:hover {
+    background-color: #f8f9fa; /* Un fondo sutil al pasar el mouse */
+}
+
+.movements-table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef; /* Línea separadora más suave */
+}
+
+/* --- NUEVOS ESTILOS PARA LAS ETIQUETAS (BADGES) --- */
+.badge-in, .badge-out {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4em 0.8em;
+    border-radius: 50rem; /* Para que sea tipo píldora */
+    font-weight: 500;
+}
+
+.badge-in {
+    background-color: rgba(37, 191, 156, 0.15); /* Fondo verde claro */
+    color: #1a7e69; /* Texto verde oscuro */
+}
+
+.badge-out {
+    background-color: rgba(239, 150, 59, 0.15); /* Fondo naranja claro */
+    color: #b56c19; /* Texto naranja oscuro */
+}
