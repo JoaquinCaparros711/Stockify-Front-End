@@ -1,0 +1,69 @@
+.search-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 280px;
+}
+
+.search-input.form-control {
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem; 
+    box-shadow: none; 
+    transition: border-color 0.2s, box-shadow 0.2s;
+    height: 40px;
+}
+
+.search-input.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+.search-button.btn {
+    background-color: #3498db;
+    border-color: #3498db;
+    border-radius: 0.5rem; 
+    color: white;
+    margin-bottom: 16px;
+    padding: 7px;
+}
+
+.search-button.btn:hover {
+    background-color: #34495e;
+    border-color: #34495e;
+}
+
+.search-input-group .btn-search:hover {
+    background-color: #34495e;
+}
+
+.btn-add-product, .btn-following {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-add-product:hover, .btn-following:hover {
+    background-color: #34495e;
+    border-color: #34495e;
+}
+
+.btn-back {
+    border-color: #3498db;
+    background-color: transparent;
+}
+
+.btn-back:hover {
+    color: #fff;
+    background-color: #3498db;
+}
+
+.btn-export-visibility {
+    background-color: transparent;
+    border-color: #3498db;
+    margin-bottom: 16px;
+    padding: 6.5px;
+}
+
+.btn-export-visibility:hover {
+    background-color: #3498db;
+    color: #fff;
+}

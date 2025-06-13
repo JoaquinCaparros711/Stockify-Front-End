@@ -2,6 +2,8 @@ import React from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge } from 'react-bootstrap';
 import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsArrowRight } from 'react-icons/bs';
 import VentasChart from '../../components/VentasChart'; // Importamos el gráfico
+import './Home.css';
+
 
 // Un nuevo componente de tarjeta para los indicadores (KPIs)
 const KpiCard = ({ title, value, icon, color }) => (
@@ -40,7 +42,7 @@ const Home = () => {
                     <p className="text-muted mb-0">Resumen de la actividad de tu negocio.</p>
                 </div>
                 {/* ACCESO RÁPIDO PRINCIPAL */}
-                <Button variant="primary" className="shadow-sm">
+                <Button variant="primary" className="shadow-sm create-sale">
                     <BsPlus size={24} className="me-1" />
                     Crear Venta
                 </Button>
@@ -86,7 +88,7 @@ const Home = () => {
                             </Table>
                         </Card.Body>
                         <Card.Footer className="text-center">
-                            <Button variant="outline-primary" size="sm">
+                            <Button className='btn-show-all' variant="outline-primary" size="sm">
                                 Ver todos <BsArrowRight />
                             </Button>
                         </Card.Footer>
