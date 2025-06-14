@@ -1,0 +1,20 @@
+
+
+.create-sale {
+    background-color: #3498db;
+    border: none;
+}
+
+.create-sale:hover {
+    background-color: #34495e;
+}
+
+.btn-show-all {
+    color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-show-all:hover {
+    border-color: #34495e;
+    background-color: #34495e;
+}

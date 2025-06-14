@@ -1,0 +1,129 @@
+.sidebar {
+  width: 260px;
+  background-color: #34495e;
+  color: white;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+}
+
+.sidebar-logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 1rem;
+  color: #3498db;
+}
+
+.sidebar-nav {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-heading {
+  padding: 1rem 1.5rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #95a5a6;
+  text-transform: uppercase;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  color: #ecf0f1;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  margin: 0.25rem 0.75rem;
+  border-radius: 8px;
+}
+
+.nav-link:hover {
+  background-color: #34495e;
+  color: white;
+}
+
+.nav-link.active {
+  background-color: #3498db;
+  color: white;
+  font-weight: 500;
+}
+
+.nav-icon {
+  margin-right: 1rem;
+  font-size: 1.2rem;
+}
+
+.sidebar-footer {
+  padding: 1rem 0.75rem;
+  border-top: 1px solid #34495e;
+}
+
+
+
+/* Estilo del botón de hamburguesa (versión final) */
+.sidebar-toggle-btn {
+  display: none; /* Oculto por defecto en pantallas grandes */
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001; /* Siempre encima de todo */
+  
+  /* Estilos para que sea solo el ícono azul */
+  background: transparent;
+  border: none;
+  color: #3498db;
+  font-size: 2.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Estilo del fondo oscuro cuando el menú está abierto */
+.sidebar-backdrop {
+  display: none; /* Oculto por defecto */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+/* Media Query para pantallas pequeñas (tablets y móviles) */
+@media (max-width: 992px) {
+  .sidebar {
+    /* Por defecto, el sidebar está oculto */
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    /* Cuando tiene la clase 'open', se muestra */
+    transform: translateX(0);
+  }
+
+  .sidebar-toggle-btn {
+    /* Mostramos el botón de hamburguesa */
+    display: block;
+    margin-top: 15px;
+  }
+
+  /* Usamos una sola regla para mostrar el fondo oscuro */
+  .sidebar.open ~ .sidebar-backdrop {
+    display: block;
+  }
+}
