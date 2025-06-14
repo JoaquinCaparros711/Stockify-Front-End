@@ -1,15 +1,12 @@
 /* -- ESTILOS GENERALES DEL DASHBOARD -- */
 .dashboard-header {
-  margin-bottom: 2.5rem; /* Más espacio después de la cabecera */
+  margin-bottom: 2.5rem; 
 }
-
-/* Títulos con tipografía moderna */
 .dashboard-title {
   font-size: 2.25rem;
   font-weight: 700;
   color: #142331;
 }
-
 .dashboard-subtitle {
   font-size: 1.1rem;
   color: #6c757d;
@@ -19,7 +16,7 @@
 .kpi-card {
   background-color: #ffffff;
   border: none;
-  border-radius: 0.75rem; /* Bordes más redondeados */
+  border-radius: 0.75rem;
   padding: 1.5rem;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   display: flex;
@@ -27,22 +24,18 @@
   justify-content: space-between;
   height: 100%;
 }
-
 .kpi-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
 }
-
 .kpi-icon-wrapper {
   margin-bottom: 1rem;
 }
-
 .kpi-title {
   font-size: 1rem;
   color: #6c757d;
   margin-bottom: 0.25rem;
 }
-
 .kpi-value {
   font-size: 2rem;
   font-weight: 700;
@@ -54,12 +47,10 @@
   border: none;
   border-radius: 0.75rem;
 }
-
 .low-stock-table {
   border-collapse: separate;
-  border-spacing: 0 0.5rem; /* Espacio vertical entre filas */
+  border-spacing: 0 0.5rem;
 }
-
 .low-stock-table thead th {
   border: none !important;
   color: #6c757d;
@@ -68,18 +59,15 @@
   font-size: 0.8rem;
   padding-bottom: 0.5rem;
 }
-
 .low-stock-table tbody tr {
-  background-color: #f8f9fa; /* Fondo sutil para cada fila */
+  background-color: #f8f9fa;
   border-radius: 0.5rem;
 }
-
 .low-stock-table tbody td {
   border: none !important;
   padding: 1rem;
   vertical-align: middle;
 }
-
 .low-stock-table tbody td:first-child {
   border-top-left-radius: 0.5rem;
   border-bottom-left-radius: 0.5rem;
@@ -98,7 +86,50 @@
     font-weight: 500;
     transition: background-color 0.2s;
 }
-
 .btn-create-sale:hover {
     background-color: #34495e;
 }
+
+
+/* --- MEDIA QUERIES PARA PANTALLAS PEQUEÑAS (CELULARES) --- */
+@media (max-width: 767px) {
+  .dashboard-header {
+    /* Apila el título y el botón */
+    flex-direction: column;
+    /* Alinea todo al inicio */
+    align-items: flex-start !important;
+    gap: 1.5rem; /* Espacio entre título y botón */
+    margin-bottom: 2rem;
+  }
+
+  .dashboard-title {
+    font-size: 1.8rem; /* Reduce el tamaño del título principal */
+  }
+
+  .dashboard-subtitle {
+    font-size: 1rem;
+  }
+
+  /* El cambio más importante: hace las tarjetas más compactas */
+  .kpi-card {
+    padding: 0.5rem;
+    flex-direction: row; /* Pone el ícono al lado del texto */
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .kpi-icon-wrapper {
+    margin-bottom: 0; /* Quita el margen de abajo del ícono */
+    margin-right: 1rem; /* Añade espacio a la derecha del ícono */
+  }
+  
+  .kpi-value {
+    font-size: 1.5rem; /* Reduce el tamaño del número grande */
+  }
+
+  .low-stock-table tbody td {
+    padding: 0.75rem; /* Reduce el padding de las celdas de la tabla */
+  }
+}
+
+
