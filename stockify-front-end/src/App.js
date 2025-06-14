@@ -15,28 +15,31 @@ import Movements from './components/pages/Movement';
 import Stock from './components/pages/Stock';
 import Branchs from './components/pages/Branchs';
 import Users from './components/pages/Users';
+import { DataProvider } from './context/DataContext';
 
 function App() {
   return (
     <Router>
       {/* 2. <AuthProvider> está DENTRO del Router */}
       <AuthProvider>
-        <Routes>
-          {/* Rutas Públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <DataProvider>
+          <Routes>
+            {/* Rutas Públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Rutas Privadas */}
-          <Route path="/*" element={<ProtectedRoute />}>
-            {/* Estas son las rutas que estarán dentro del layout principal */}
-            <Route index element={<Home />} /> {/* Usamos 'index' para la ruta raíz anidada */}
-            <Route path="productos" element={<Products />} />
-            <Route path="movimientos" element={<Movements />} />
-            <Route path="stock" element={<Stock />} />
-            <Route path="sucursales" element={<Branchs />} />
-            <Route path="usuarios" element={<Users />} />
-          </Route>
-        </Routes>
+            {/* Rutas Privadas */}
+            <Route path="/*" element={<ProtectedRoute />}>
+              {/* Estas son las rutas que estarán dentro del layout principal */}
+              <Route index element={<Home />} /> {/* Usamos 'index' para la ruta raíz anidada */}
+              <Route path="productos" element={<Products />} />
+              <Route path="movimientos" element={<Movements />} />
+              <Route path="stock" element={<Stock />} />
+              <Route path="sucursales" element={<Branchs />} />
+              <Route path="usuarios" element={<Users />} />
+            </Route>
+          </Routes>
+        </DataProvider>
       </AuthProvider>
     </Router>
   );
