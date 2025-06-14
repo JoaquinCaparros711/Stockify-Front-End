@@ -67,22 +67,12 @@
   font-size: 1.2rem;
 }
 
-.sidebar-footer {
-  padding: 1rem 0.75rem;
-  border-top: 1px solid #34495e;
-}
-
-
-
-/* Estilo del botón de hamburguesa (versión final) */
 .sidebar-toggle-btn {
-  display: none; /* Oculto por defecto en pantallas grandes */
+  display: none;
   position: fixed;
   top: 15px;
   left: 15px;
-  z-index: 1001; /* Siempre encima de todo */
-  
-  /* Estilos para que sea solo el ícono azul */
+  z-index: 1001;
   background: transparent;
   border: none;
   color: #ec9639;
@@ -92,9 +82,8 @@
   line-height: 1;
 }
 
-/* Estilo del fondo oscuro cuando el menú está abierto */
 .sidebar-backdrop {
-  display: none; /* Oculto por defecto */
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -104,49 +93,51 @@
   z-index: 999;
 }
 
-/* Media Query para pantallas pequeñas (tablets y móviles) */
-@media (max-width: 992px) {
-  .sidebar {
-    /* Por defecto, el sidebar está oculto */
-    transform: translateX(-100%);
-  }
-
-  .sidebar.open {
-    /* Cuando tiene la clase 'open', se muestra */
-    transform: translateX(0);
-  }
-
-  .sidebar-toggle-btn {
-    /* Mostramos el botón de hamburguesa */
-    display: block;
-    margin-top: 15px;
-  }
-
-  /* Usamos una sola regla para mostrar el fondo oscuro */
-  .sidebar.open ~ .sidebar-backdrop {
-    display: block;
-  }
-}
-
+/* --- ESTILOS PARA EL FOOTER CON MENÚ DESPLEGABLE --- */
 .sidebar-footer {
-  /* Modificamos el footer para que los elementos se apilen */
   padding: 0.5rem 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info-toggle {
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  /* CAMBIO: Usamos Flexbox para alinear el contenido */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Separa el nombre y la flecha */
+}
+
+/* CAMBIO: Hacemos visible la flecha y la estilizamos */
+.user-info-toggle::after {
+  display: inline-block;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+  /* Como el menú abre hacia arriba, la flecha apunta hacia arriba */
+  transform: rotate(180deg);
+  margin-top: -0.25rem; /* Ajuste vertical fino */
+}
+
+.user-info-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.2); /* Un fondo sutil para destacar */
-  border-radius: 8px;
+  /* Para que el nombre no empuje a la flecha fuera de la vista */
+  overflow: hidden;
 }
 
 .user-icon {
   font-size: 1.5rem;
   margin-right: 0.75rem;
-  color: #ecf0f1; /* Blanco suave */
+  color: #ecf0f1;
 }
 
 .user-name {
@@ -154,11 +145,55 @@
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* Para nombres largos */
+  text-overflow: ellipsis;
 }
 
-/* Ajuste para el enlace de logout */
-.logout-link {
-  margin: 0 !important;
-  width: 100%;
+/* --- ESTILOS MEJORADOS PARA EL MENÚ DESPLEGABLE --- */
+.sidebar-footer .dropdown-menu {
+    background-color: #2b3d4e;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0; 
+    border-radius: 8px;
+    width: 100%;
+}
+
+.sidebar-footer .dropdown-item {
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem; 
+    background-color: transparent;
+    transition: background-color 0.2s;
+}
+
+.sidebar-footer .dropdown-item.text-danger {
+    color: #e74c3c; 
+}
+
+.sidebar-footer .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.sidebar-footer .dropdown-item.text-danger:hover {
+    background-color: #e74c3c;
+    color: white !important;
+}
+
+
+/* Media Query para pantallas pequeñas */
+@media (max-width: 992px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-toggle-btn {
+    display: block;
+    margin-top: 15px;
+  }
+  .sidebar.open ~ .sidebar-backdrop {
+    display: block;
+  }
 }
