@@ -1,0 +1,136 @@
+/* -- Contenedor Principal -- */
+.auth-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    font-family: 'Montserrat', sans-serif; /* Aseguramos la fuente moderna */
+}
+
+/* -- Paneles (Azul y Gris) -- */
+.auth-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    text-align: center;
+    width: 50%;
+}
+
+.auth-panel.info-panel {
+    background-color: #3498db; /* Tu color */
+    color: white;
+}
+
+.auth-panel.info-panel img {
+    height: 70px;
+    margin-bottom: 2rem;
+}
+
+.auth-panel.form-panel {
+    background-color: #f8f9fa; /* Tu color */
+}
+
+/* -- Tipografía Mejorada -- */
+.auth-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #142331;
+}
+
+.auth-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    max-width: 350px;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.info-panel .auth-title { /* Título en panel azul */
+    color: white;
+}
+
+.info-panel .auth-subtitle { /* Subtítulo en panel azul */
+    color: rgba(255, 255, 255, 0.85);
+}
+
+
+/* -- Formularios y Botones Rediseñados -- */
+.auth-form {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Grupo para el ícono + input */
+.input-group-custom {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.input-group-custom .icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd; /* Color sutil para el ícono */
+}
+
+.input-group-custom .form-control {
+    padding-left: 50px; /* Espacio para el ícono */
+    border-radius: 0.75rem; /* Bordes más suaves */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-size: 1rem;
+    border: 1px solid #dee2e6;
+    box-shadow: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group-custom .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+.btn-auth {
+    background-color: #3498db; /* Tu color */
+    border: none;
+    color: white;
+    border-radius: 0.75rem; /* Mismo borde que los inputs */
+    padding: 1rem;
+    width: 100%;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.btn-auth:hover {
+    background-color: #2980b9; /* Un azul más oscuro para el hover */
+}
+
+.btn-outline-light {
+    border-radius: 0.75rem;
+    padding: 1rem 2rem;
+    font-weight: 500;
+    font-size: 1rem;
+    border: 2px solid white;
+    color: white;
+    background-color: transparent;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-outline-light:hover {
+    background-color: white;
+    color: #3498db;
+}
+
+/* --- Adaptación para Móviles --- */
+@media (max-width: 767px) {
+    .auth-container {
+        flex-direction: column;
+    }
+    .auth-panel {
+        width: 100%;
+        padding: 2rem;
+    }
+}

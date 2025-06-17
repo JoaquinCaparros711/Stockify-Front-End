@@ -1,0 +1,40 @@
+body {
+  margin: 0;
+  background-color: #f8f9fa;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.app-container {
+  display: flex;
+}
+
+.main-content {
+  flex-grow: 1;
+  /* Margen para la versión de escritorio */
+  margin-left: 260px; 
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.content-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  /* Padding general para todas las pantallas */
+  padding: 24px;
+}
+
+/* --- Media Query para Pantallas Pequeñas --- */
+@media (max-width: 992px) {
+  .main-content {
+    /* Eliminamos el margen para que ocupe todo el ancho */
+    margin-left: 0;
+  }
+
+  /* ESTA ES LA NUEVA REGLA QUE SOLUCIONA EL PROBLEMA */
+  .content-area {
+    /* Sobrescribimos el padding izquierdo para hacerle lugar al botón */
+    padding-left: 80px; 
+  }
+}

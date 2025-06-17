@@ -1,0 +1,86 @@
+/* --- ANIMACIÓN DE ENTRADA --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stock-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- ESTILOS DE CABECERA (consistente con otras páginas) --- */
+.page-header {
+    margin-bottom: 2.5rem;
+}
+.page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #142331;
+}
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+.btn-add-stock {
+    background-color: #3498db;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.btn-add-stock:hover {
+    background-color: #34495e;
+}
+
+
+/* --- NUEVO DISEÑO PARA LA TABLA DE STOCK --- */
+.stock-table-card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+/* Barra de herramientas que contiene el título y el selector */
+.stock-toolbar {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stock-toolbar .form-select {
+    max-width: 300px; /* Ancho máximo para el selector */
+    border-radius: 0.5rem;
+}
+
+/* Estilos de la tabla */
+.stock-table thead th {
+    border: none !important;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 1rem 1.5rem;
+}
+
+.stock-table tbody tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.stock-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.stock-table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef;
+}
+
+.stock-table .btn-adjust {
+    border-radius: 0.5rem;
+}
