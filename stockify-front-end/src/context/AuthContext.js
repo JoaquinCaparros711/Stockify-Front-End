@@ -1,5 +1,7 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api'; 
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
 
@@ -7,84 +9,93 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate();
     
     const [user, setUser] = useState(() => {
-        const savedUser = localStorage.getItem('user');
-        return savedUser ? JSON.parse(savedUser) : null;
+        const token = localStorage.getItem('accessToken');
+        try {
+            return token ? jwtDecode(token) : null;
+        } catch (error) {
+            console.error("Token inicial inválido:", error);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            return null;
+        }
     });
 
-    // SIMULACIÓN DE TABLAS DE LA BASE DE DATOS
-    const [users, setUsers] = useState([
-        { id: 1, username: 'joaco', password: '123', name: 'Joaquín (Admin)', role: 'admin', branch: null, companyId: 1 },
-    ]);
-    const [companies, setCompanies] = useState([
-        { id: 1, name: 'Empresa de Prueba', cuit: '30-11223344-5', email: 'empresa@test.com', phone: '261123456', address: 'Av. Test 123' }
-    ]);
+    const login = async (data) => {
+        try {
+            const response = await api.post('/user/login/', {
+                username: data.username,
+                password: data.password
+            });
+            
+            const { access, refresh } = response.data;
 
+            localStorage.setItem('accessToken', access);
+            localStorage.setItem('refreshToken', refresh);
 
-    const login = (data) => {
-        const foundUser = users.find(
-            (u) => u.username === data.username && u.password === data.password
-        );
+            const decodedUser = jwtDecode(access);
 
-        if (foundUser) {
-            // AHORA GUARDAMOS MÁS DATOS DEL USUARIO AL HACER LOGIN
-            const userData = { 
-                username: foundUser.username, 
-                name: foundUser.name,
-                role: foundUser.role,      // <-- Importante para la lógica de roles
-                branch: foundUser.branch,    // <-- Importante para la lógica de roles
-                companyId: foundUser.companyId
-            };
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(decodedUser);
             navigate('/');
-        } else {
-            alert('Usuario o contraseña incorrectos');
+
+        } catch (error) {
+            console.error("Error en el login:", error.response?.data);
+            alert("Error: " + (error.response?.data?.detail || "Usuario o contraseña incorrectos."));
         }
     };
 
-    // FUNCIÓN DE REGISTRO COMPLETAMENTE ACTUALIZADA
-    const register = (formData) => {
-        const userExists = users.some((u) => u.username === formData.username);
-        if (userExists) {
-            alert('El nombre de usuario ya existe');
-            return;
+    // FUNCIÓN DE REGISTRO CON EL PAYLOAD CORRECTO
+    const register = async (formData) => {
+        try {
+            // Hacemos la petición POST al endpoint de registro
+            // con la estructura de datos anidada que espera el serializador.
+            const response = await api.post('/user/register/', {
+                // Datos del usuario (nivel superior)
+                username: formData.username,
+                password: formData.password,
+                password2: formData.confirmPassword, // El serializador espera 'password2'
+                email: formData.email,
+                name: formData.name,
+                
+                // Objeto anidado 'company'
+                company: {
+                    name: formData.companyName,
+                    cuit: formData.companyCuit,
+                    email: formData.companyEmail,
+                    phone: formData.companyPhone,
+                    address: formData.companyAddress,
+                }
+            });
+
+            console.log("Registro exitoso:", response.data);
+            alert('¡Cuenta creada con éxito! Ahora puedes iniciar sesión.');
+            navigate('/login');
+
+        } catch (error) {
+            console.error("Error en el registro:", error.response?.data);
+            const errorData = error.response?.data;
+            let errorMessage = "Ocurrió un error en el registro.";
+            if (errorData) {
+                // Formateamos los errores para que sean más legibles
+                errorMessage = Object.keys(errorData)
+                    .map(key => {
+                        // Si el error está en el objeto 'company', lo mostramos
+                        if (key === 'company' && typeof errorData[key] === 'object') {
+                            return Object.keys(errorData[key])
+                                .map(companyKey => `Empresa - ${companyKey}: ${errorData[key][companyKey]}`)
+                                .join('\n');
+                        }
+                        return `${key}: ${errorData[key]}`;
+                    })
+                    .join('\n');
+            }
+            alert(errorMessage);
         }
-
-        // 1. Creamos la nueva empresa con los datos del formulario
-        const newCompany = {
-            id: Date.now(),
-            name: formData.companyName,
-            cuit: formData.companyCuit,
-            email: formData.companyEmail,
-            phone: formData.companyPhone,
-            address: formData.companyAddress,
-        };
-        // La "guardamos" en nuestro estado que simula la base de datos
-        setCompanies(prevCompanies => [...prevCompanies, newCompany]);
-        console.log("EMPRESA CREADA:", newCompany);
-
-        // 2. Creamos el nuevo usuario admin
-        const newUser = {
-            id: Date.now() + 1,
-            name: formData.name,
-            username: formData.username,
-            email: formData.email,
-            password: formData.password,
-            role: 'admin', // Como dijiste, el que se registra es siempre admin
-            branch: null, // Los admins no pertenecen a una sucursal específica
-            companyId: newCompany.id // Lo asociamos a la empresa recién creada
-        };
-        // Lo "guardamos" en nuestro estado de usuarios
-        setUsers(prevUsers => [...prevUsers, newUser]);
-        console.log("USUARIO ADMIN CREADO:", newUser);
-
-        alert(`¡Cuenta para la empresa '${newCompany.name}' creada con éxito! Ahora puedes iniciar sesión.`);
-        navigate('/login');
     };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         navigate('/login');
     };
 
