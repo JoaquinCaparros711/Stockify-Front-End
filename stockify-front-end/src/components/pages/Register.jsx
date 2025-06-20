@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext'; // Asegúrate de que la ruta sea correcta
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
-import Logo from '../../assets/Logo.png'; // Asegúrate de que la ruta sea correcta
+import Logo from '../../assets/Logo.png';
 import { 
     BsPerson, 
     BsEnvelope, 
@@ -14,89 +14,172 @@ import {
     BsGeoAlt
 } from 'react-icons/bs';
 
+// --- FUNCIÓN DE AYUDA PARA VALIDAR LOS CAMPOS ---
+const validateField = (name, value, { password = '', users = [], companies = [] }) => {
+    // 1. Validación de campo vacío
+    if (!value) {
+        return 'Este campo es obligatorio.';
+    }
+    
+    // 2. Validaciones específicas
+    switch (name) {
+        case 'name':
+            return /\d/.test(value) ? 'El nombre no debe contener números.' : '';
+        case 'username':
+            return users.some(user => user.username === value) ? 'Este nombre de usuario ya está en uso.' : '';
+        case 'email':
+            if (users.some(user => user.email === value)) return 'Este email ya está registrado.';
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? '' : 'El formato del email es inválido.';
+        case 'password':
+            if (value.length < 8) return 'Debe tener al menos 8 caracteres.';
+            if (!/[A-Z]/.test(value)) return 'Debe contener al menos una mayúscula.';
+            if (!/\d/.test(value)) return 'Debe contener al menos un número.';
+            if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) return 'Debe contener al menos un símbolo.';
+            return '';
+        case 'confirmPassword':
+            return value !== password ? 'Las contraseñas no coinciden.' : '';
+        case 'companyName':
+            return companies.some(company => company.name === value) ? 'Ya existe una empresa con este nombre.' : '';
+        
+        // --- CAMBIO EN LA VALIDACIÓN DEL CUIT ---
+        case 'companyCuit':
+            if (!/^\d+$/.test(value)) { // Primero chequeamos si son solo números
+                return 'El CUIT solo debe contener números.';
+            }
+            if (value.length !== 11) { // Luego chequeamos la longitud
+                return 'El CUIT debe tener exactamente 11 dígitos.';
+            }
+            return ''; // Si pasa ambas pruebas, no hay error
+
+        case 'companyEmail':
+            if (companies.some(company => company.email === value)) return 'Este email de empresa ya está registrado.';
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? '' : 'El formato del email es inválido.';
+        case 'companyPhone':
+            return /^\d+$/.test(value) ? '' : 'El teléfono solo debe contener números.';
+        default:
+            return '';
+    }
+};
+
 const Register = () => {
-    // 2. AÑADIMOS TODOS LOS CAMPOS DE LA EMPRESA AL ESTADO
     const [formData, setFormData] = useState({
-        // Datos del Usuario Admin
-        name: '',
-        email: '',
-        username: '',
-        password: '',
-        confirmPassword: '',
-        // Datos de la Empresa
-        companyName: '',
-        companyCuit: '',
-        companyEmail: '',
-        companyPhone: '',
-        companyAddress: '',
+        name: '', email: '', username: '', password: '', confirmPassword: '',
+        companyName: '', companyCuit: '', companyEmail: '', companyPhone: '', companyAddress: '',
     });
-    const { register } = useAuth();
+    
+    const [errors, setErrors] = useState({});
+    
+    // Asumo que tu AuthContext provee 'users' y 'companies' para las validaciones de duplicados
+    const { register, users = [], companies = [] } = useAuth();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [e.target.name]: value });
+
+        const error = validateField(name, value, { 
+            password: formData.password, 
+            users: users, 
+            companies: companies 
+        });
+        setErrors({ ...errors, [name]: error });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (formData.password !== formData.confirmPassword) {
-            alert('Las contraseñas no coinciden');
+        
+        const finalErrors = {};
+        Object.keys(formData).forEach(key => {
+            const error = validateField(key, formData[key], {
+                password: formData.password,
+                users: users,
+                companies: companies
+            });
+            if (error) {
+                finalErrors[key] = error;
+            }
+        });
+
+        setErrors(finalErrors);
+
+        if (Object.keys(finalErrors).length > 0) {
+            alert('Por favor, corrige los errores marcados en el formulario.');
             return;
         }
+        
         register(formData);
     };
 
     return (
         <div className="auth-container">
             <div className="auth-panel form-panel">
-                <form className="auth-form" onSubmit={handleSubmit}>
+                <form className="auth-form" onSubmit={handleSubmit} noValidate>
                     <h2 className="auth-title">Crear tu cuenta</h2>
                     
                     <h5 className="text-muted mb-3 text-start">Datos del Administrador</h5>
+                    
                     <div className="input-group-custom">
                         <BsPerson className="icon" />
                         <input type="text" name="name" className="form-control" placeholder="Nombre y Apellido" onChange={handleChange} required />
                     </div>
+                    {errors.name && <p className="text-danger small ms-2 text-start">{errors.name}</p>}
+
                     <div className="input-group-custom">
                         <BsEnvelope className="icon" />
                         <input type="email" name="email" className="form-control" placeholder="E-mail de contacto" onChange={handleChange} required />
                     </div>
+                    {errors.email && <p className="text-danger small ms-2 text-start">{errors.email}</p>}
+                    
                     <div className="input-group-custom">
                         <BsPerson className="icon" />
                         <input type="text" name="username" className="form-control" placeholder="Usuario" onChange={handleChange} required />
                     </div>
+                    {errors.username && <p className="text-danger small ms-2 text-start">{errors.username}</p>}
+                    
                     <div className="input-group-custom">
                         <BsShieldLock className="icon" />
                         <input type="password" name="password" className="form-control" placeholder="Contraseña" onChange={handleChange} required />
                     </div>
+                    {errors.password && <p className="text-danger small ms-2 text-start">{errors.password}</p>}
+                    
                     <div className="input-group-custom">
                         <BsKey className="icon" />
                         <input type="password" name="confirmPassword" className="form-control" placeholder="Repetir Contraseña" onChange={handleChange} required />
                     </div>
+                    {errors.confirmPassword && <p className="text-danger small ms-2 text-start">{errors.confirmPassword}</p>}
                     
                     <hr className="my-4" />
                     
                     <h5 className="text-muted mb-3 text-start">Datos de tu Empresa</h5>
-                    {/* 3. AÑADIMOS LOS INPUTS PARA LOS DATOS DE LA EMPRESA */}
+                    
                     <div className="input-group-custom">
                         <BsBuilding className="icon" />
                         <input type="text" name="companyName" className="form-control" placeholder="Nombre de la Empresa" onChange={handleChange} required />
                     </div>
+                    {errors.companyName && <p className="text-danger small ms-2 text-start">{errors.companyName}</p>}
+
                     <div className="input-group-custom">
                         <BsFileEarmarkText className="icon" />
-                        <input type="text" name="companyCuit" className="form-control" placeholder="CUIT" onChange={handleChange} required />
+                        <input type="text" name="companyCuit" className="form-control" placeholder="CUIT (11 dígitos sin guiones)" onChange={handleChange} required />
                     </div>
+                    {errors.companyCuit && <p className="text-danger small ms-2 text-start">{errors.companyCuit}</p>}
+
                     <div className="input-group-custom">
                         <BsEnvelope className="icon" />
                         <input type="email" name="companyEmail" className="form-control" placeholder="E-mail de la Empresa" onChange={handleChange} required />
                     </div>
+                    {errors.companyEmail && <p className="text-danger small ms-2 text-start">{errors.companyEmail}</p>}
+                    
                     <div className="input-group-custom">
                         <BsTelephone className="icon" />
                         <input type="text" name="companyPhone" className="form-control" placeholder="Teléfono" onChange={handleChange} required />
                     </div>
+                    {errors.companyPhone && <p className="text-danger small ms-2 text-start">{errors.companyPhone}</p>}
+                    
                     <div className="input-group-custom">
                         <BsGeoAlt className="icon" />
                         <input type="text" name="companyAddress" className="form-control" placeholder="Dirección" onChange={handleChange} required />
                     </div>
+                    {errors.companyAddress && <p className="text-danger small ms-2 text-start">{errors.companyAddress}</p>}
 
                     <button type="submit" className="btn btn-primary btn-auth mt-3">
                         CREAR CUENTA
