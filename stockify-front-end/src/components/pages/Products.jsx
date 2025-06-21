@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Card, Dropdown, Table, Badge, Form, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Dropdown, Table, Badge, Form, Modal, Spinner } from 'react-bootstrap';
 import { BsPlus, BsBoxSeam, BsGraphUp, BsWallet2, BsThreeDotsVertical, BsPencilFill, BsTrashFill } from 'react-icons/bs';
+import { useData } from '../../context/DataContext';
 import "./Product.css";
-
-const mockProductsData = [
-    { id: 1, name: 'Mate Imperial Calabaza', description: 'Interior calabaza, forrado en cuero', price: 28000.00, category: 'Mates', estado: 'Activo' },
-    { id: 2, name: 'Mate Camionero Algarrobo', description: 'Interior madera, virola de acero', price: 14500.00, category: 'Mates', estado: 'Activo' },
-    { id: 3, name: 'Matera 100% Cuero', description: 'Material cuero, correa ajustable', price: 30000.00, category: 'Materas', estado: 'Inactivo' },
-    { id: 4, name: 'Lata Matera "MATERO"', description: 'Set de yerbera y azucarera', price: 9000.00, category: 'Latas', estado: 'Activo' }
-];
 
 const KpiCard = ({ title, value, icon, color }) => (
     <div className="kpi-card shadow-sm">
@@ -21,13 +15,12 @@ const KpiCard = ({ title, value, icon, color }) => (
 );
 
 const Products = () => {
-    // --- 1. AÑADIMOS LOS ESTADOS NECESARIOS ---
-    const [products, setProducts] = useState(mockProductsData);
+    const { products, loading, addProduct, updateProduct, deleteProduct } = useData();
+
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState({ name: '', description: '', price: '', category: '', estado: 'Activo' });
 
-    // Efecto para cargar datos en el formulario al editar
     useEffect(() => {
         if (editingProduct) {
             setFormData(editingProduct);
@@ -35,45 +28,47 @@ const Products = () => {
             setFormData({ name: '', description: '', price: '', category: '', estado: 'Activo' });
         }
     }, [editingProduct]);
+    
+    const handleCloseModal = () => { setShowModal(false); setEditingProduct(null); };
+    const handleShowAddModal = () => { setEditingProduct(null); setShowModal(true); };
+    const handleShowEditModal = (product) => { setEditingProduct(product); setShowModal(true); };
+    const handleFormChange = (e) => { setFormData(prev => ({ ...prev, [e.target.name]: e.target.value })); };
 
-    // --- LÓGICA PARA MANEJAR EL MODAL Y EL FORMULARIO ---
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingProduct(null);
-    };
-
-    const handleShowAddModal = () => {
-        setEditingProduct(null);
-        setShowModal(true);
-    };
-
-    const handleShowEditModal = (product) => {
-        setEditingProduct(product);
-        setShowModal(true);
-    };
-
-    const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSaveChanges = () => {
-        if (editingProduct) {
-            console.log("Actualizando producto:", formData);
-            setProducts(products.map(p => p.id === editingProduct.id ? { ...formData, id: p.id } : p));
-        } else {
-            console.log("Creando producto:", formData);
-            setProducts([...products, { ...formData, id: Date.now() }]);
+    const handleSaveChanges = async () => {
+        try {
+            if (editingProduct) {
+                await updateProduct(editingProduct.id, formData);
+            } else {
+                await addProduct(formData);
+            }
+            handleCloseModal();
+        } catch (error) {
+            console.log("El formulario no se cerrará debido a un error de la API.");
         }
-        handleCloseModal();
     };
 
     const handleDeleteProduct = (id) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar este producto del catálogo?')) {
-            console.log("Eliminando producto con id:", id);
-            setProducts(products.filter(p => p.id !== id));
-        }
+        deleteProduct(id);
     };
+
+    const totalCatalogValue = products.reduce((sum, product) => sum + parseFloat(product.price || 0), 0);
+
+    // Función para formatear el número como moneda ARS
+    const formatCurrency = (number) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+        }).format(number);
+    };
+
+
+    if (loading) {
+        return (
+            <Container className="d-flex justify-content-center align-items-center" style={{height: '80vh'}}>
+                <Spinner animation="border" variant="primary" />
+            </Container>
+        );
+    }
 
     return (
         <Container fluid className="products-container">
@@ -82,7 +77,6 @@ const Products = () => {
                     <h1 className="page-title">Catálogo de Productos</h1>
                     <p className="page-subtitle">Administra los productos base de tu negocio.</p>
                 </div>
-                {/* El botón ahora abre el modal */}
                 <Button className="btn-add-product" onClick={handleShowAddModal}>
                     <BsPlus size={22} className="me-2" />
                     Agregar Producto
@@ -91,15 +85,12 @@ const Products = () => {
 
             <Row className="mb-4">
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos Activos" value={products.filter(p => p.estado === 'Activo').length} icon={<BsBoxSeam size={32} />} color="primary" /></Col>
-                <Col md={6} lg={3} className="mb-4"><KpiCard title="Valor de Catálogo" value="$4.5M" icon={<BsWallet2 size={32} />} color="success" /></Col>
+                <Col md={6} lg={3} className="mb-4"><KpiCard title="Valor de Catálogo" value={formatCurrency(totalCatalogValue)} icon={<BsWallet2 size={32} />} color="success" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Categorías" value={[...new Set(products.map(p => p.category))].length} icon={<BsGraphUp size={32} />} color="info" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos Inactivos" value={products.filter(p => p.estado === 'Inactivo').length} icon={<BsBoxSeam size={32} />} color="secondary" /></Col>
             </Row>
 
             <Card className="shadow-sm products-table-card">
-                <div className="products-toolbar">
-                     {/* ... (Tu barra de herramientas con filtros) ... */}
-                </div>
                 <Table responsive className="products-table">
                     <thead>
                         <tr>
@@ -112,7 +103,6 @@ const Products = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {/* La tabla ahora es dinámica y se renderiza desde el estado */}
                         {products.map((product) => (
                             <tr key={product.id}>
                                 <td data-label="Checkbox"><Form.Check type="checkbox" /></td>
@@ -140,42 +130,19 @@ const Products = () => {
                 </Table>
             </Card> 
 
-            {/* --- MODAL PARA CREAR Y EDITAR PRODUCTOS --- */}
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>{editingProduct ? 'Editar Producto' : 'Agregar Nuevo Producto'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Nombre del Producto</Form.Label>
-                            <Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Descripción</Form.Label>
-                            <Form.Control as="textarea" rows={3} name="description" value={formData.description} onChange={handleFormChange} />
-                        </Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Nombre del Producto</Form.Label><Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Descripción</Form.Label><Form.Control as="textarea" rows={3} name="description" value={formData.description} onChange={handleFormChange} /></Form.Group>
                         <Row>
-                            <Col>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Categoría</Form.Label>
-                                    <Form.Control type="text" name="category" value={formData.category} onChange={handleFormChange} />
-                                </Form.Group>
-                            </Col>
-                            <Col>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Precio</Form.Label>
-                                    <Form.Control type="number" name="price" value={formData.price} onChange={handleFormChange} />
-                                </Form.Group>
-                            </Col>
+                            <Col><Form.Group className="mb-3"><Form.Label>Categoría</Form.Label><Form.Control type="text" name="category" value={formData.category} onChange={handleFormChange} /></Form.Group></Col>
+                            <Col><Form.Group className="mb-3"><Form.Label>Precio</Form.Label><Form.Control type="number" name="price" value={formData.price} onChange={handleFormChange} /></Form.Group></Col>
                         </Row>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Estado</Form.Label>
-                            <Form.Select name="estado" value={formData.estado} onChange={handleFormChange}>
-                                <option value="Activo">Activo</option>
-                                <option value="Inactivo">Inactivo</option>
-                            </Form.Select>
-                        </Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Estado</Form.Label><Form.Select name="estado" value={formData.estado} onChange={handleFormChange}><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></Form.Select></Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>

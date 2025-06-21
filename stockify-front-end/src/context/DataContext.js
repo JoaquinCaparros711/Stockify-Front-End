@@ -1,62 +1,147 @@
-import React, { createContext, useState, useContext } from 'react';
-
-// Datos iniciales de ejemplo
-const mockMovementsData = [
-    { id: 1, date: '2025-06-12T10:30:00Z', type: 'incoming', productName: 'Mate Imperial Calabaza', quantity: 20, branchName: 'Depósito Central', userName: 'joaco', description: 'Ingreso de proveedor' },
-];
-const mockBranchStockData = [
-    { id: 1, productId: 1, productName: 'Mate Imperial Calabaza', category: 'Mate', branchId: 1, branchName: 'Depósito Central', current_stock: 30 },
-];
-const mockProductsData = [
-    { id: 1, name: 'Mate Imperial Calabaza', description: 'Interior calabaza, forrado en cuero', price: 28000.00, category: 'Mates', estado: 'Activo' },
-];
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import api from '../services/api';
 
 // Creamos el contexto
 const DataContext = createContext(null);
 
 // Creamos el Proveedor del contexto
 export const DataProvider = ({ children }) => {
-    const [movements, setMovements] = useState(mockMovementsData);
-    const [branchStock, setBranchStock] = useState(mockBranchStockData);
-    const [products, setProducts] = useState(mockProductsData); // Si quieres gestionar productos globalmente
+    const { user } = useAuth(); // Obtenemos el usuario para saber si debemos pedir datos
 
-    // Función para añadir un nuevo movimiento
-    const addMovement = (movementData) => {
-        const newMovement = {
-            id: Date.now(),
-            date: new Date().toISOString(),
-            userName: 'joaco', // Esto debería venir del AuthContext en el futuro
-            ...movementData,
+    // --- ESTADOS GLOBALES ---
+    const [products, setProducts] = useState([]);
+    const [movements, setMovements] = useState([]);
+    const [branchStock, setBranchStock] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // --- LÓGICA DE API PARA PRODUCTOS ---
+    const fetchProducts = async () => {
+        try {
+            // Usamos la URL correcta del backend
+            const response = await api.get('/control/model/product/');
+            setProducts(response.data);
+        } catch (error) {
+            console.error("Error al cargar productos:", error);
+        }
+    };
+    
+    const addProduct = async (productData) => {
+        try {
+            const response = await api.post('/control/model/product/', productData);
+            setProducts(prevProducts => [response.data, ...prevProducts]);
+            alert('¡Producto creado con éxito!');
+        } catch (error) {
+            console.error("Error al crear el producto:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    const updateProduct = async (productId, productData) => {
+        try {
+            const response = await api.put(`/control/model/product/${productId}/`, productData);
+            setProducts(prevProducts => 
+                prevProducts.map(p => (p.id === productId ? response.data : p))
+            );
+            alert('¡Producto actualizado con éxito!');
+        } catch (error) {
+            console.error("Error al actualizar el producto:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+    
+    const deleteProduct = async (productId) => {
+        try {
+            await api.delete(`/control/model/product/${productId}/`);
+            setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+            alert('Producto eliminado con éxito.');
+        } catch (error) {
+            console.error("Error al eliminar el producto:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    // --- LÓGICA DE API PARA MOVIMIENTOS (Añadida como base) ---
+    const fetchMovements = async () => {
+        try {
+            const response = await api.get('/control/model/stock_movement/'); // Asumiendo esta URL
+            setMovements(response.data);
+        } catch (error) {
+            console.error("Error al cargar movimientos:", error);
+        }
+    };
+
+    const addMovement = async (movementData) => {
+        try {
+            const response = await api.post('/control/model/stock_movement/', movementData);
+            // Actualizamos la lista de movimientos y el stock correspondiente
+            fetchMovements();
+            fetchBranchStock();
+            alert('Movimiento registrado con éxito.');
+        } catch (error) {
+            console.error("Error al registrar movimiento:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    // --- LÓGICA DE API PARA STOCK (Añadida como base) ---
+    const fetchBranchStock = async () => {
+        try {
+            const response = await api.get('/control/model/branch_stock/'); // Asumiendo esta URL
+            setBranchStock(response.data);
+        } catch (error) {
+            console.error("Error al cargar el stock:", error);
+        }
+    };
+
+    const adjustStock = async (stockId, newStockData) => {
+        try {
+            const response = await api.patch(`/control/model/branch_stock/${stockId}/`, newStockData);
+            setBranchStock(prevStock => 
+                prevStock.map(item => (item.id === stockId ? response.data : item))
+            );
+            alert('Stock ajustado con éxito.');
+        } catch (error) {
+            console.error("Error al ajustar el stock:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    // Efecto para cargar todos los datos iniciales cuando el usuario se loguea
+    useEffect(() => {
+        const loadAllData = async () => {
+            setLoading(true);
+            await Promise.all([
+                fetchProducts(),
+                fetchMovements(),
+                fetchBranchStock()
+            ]);
+            setLoading(false);
         };
 
-        // Añadimos el nuevo movimiento al principio de la lista
-        setMovements(prevMovements => [newMovement, ...prevMovements]);
-
-        // Si es una salida, ajustamos el stock
-        if (movementData.type === 'outgoing') {
-            adjustStock(movementData.productId, movementData.branchName, -movementData.quantity);
+        if (user) {
+            loadAllData();
+        } else {
+            // Si el usuario se desloguea, limpiamos los datos
+            setProducts([]);
+            setMovements([]);
+            setBranchStock([]);
         }
-        
-        console.log("Nuevo movimiento registrado:", newMovement);
-    };
-
-    // Función para ajustar el stock de un producto en una sucursal
-    const adjustStock = (productId, branchName, quantityChange) => {
-        setBranchStock(prevStock => 
-            prevStock.map(item => 
-                (item.productId === productId && item.branchName === branchName)
-                ? { ...item, current_stock: item.current_stock + quantityChange }
-                : item
-            )
-        );
-        console.log(`Stock ajustado para producto ${productId} en ${branchName}. Cambio: ${quantityChange}`);
-    };
-
+    }, [user]);
 
     const value = {
+        products,
         movements,
         branchStock,
-        products,
+        loading,
+        addProduct,
+        updateProduct,
+        deleteProduct,
         addMovement,
         adjustStock,
     };
@@ -64,7 +149,6 @@ export const DataProvider = ({ children }) => {
     return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };
 
-// Hook personalizado para usar el contexto fácilmente
 export const useData = () => {
     return useContext(DataContext);
 };
