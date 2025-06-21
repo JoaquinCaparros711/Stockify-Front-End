@@ -1,75 +1,85 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Button, Card, Dropdown, Table, Modal, Form } from 'react-bootstrap';
+import React, { useState, useMemo } from 'react';
+import { Container, Row, Col, Button, Card, Dropdown, Table, Modal, Form, Spinner } from 'react-bootstrap';
 import { BsArrowDown, BsArrowUp, BsPlus } from 'react-icons/bs';
+import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import './Movement.css';
 
-const mockMovementsData = [
-    { id: 1, date: '2025-06-12T10:30:00Z', type: 'incoming', productName: 'Mate Imperial Calabaza', quantity: 20, branchName: 'Depósito Central', userName: 'joaco', description: 'Ingreso de proveedor' },
-    { id: 2, date: '2025-06-12T09:15:00Z', type: 'outgoing', productName: 'Matera 100% cuero', quantity: 2, branchName: 'Sucursal Córdoba', userName: 'vendedor1', description: 'Venta a cliente final' },
-    { id: 3, date: '2025-06-11T15:00:00Z', type: 'outgoing', productName: 'Lata MATERO', quantity: 5, branchName: 'Sucursal Mendoza', userName: 'joaco', description: 'Transferencia a otra sucursal' },
-];
-
-// Datos de ejemplo para los selectores del formulario del modal
-const allProducts = [{id: 1, name: 'Mate Imperial Calabaza'}, {id: 2, name: 'Matera 100% cuero'}, {id: 3, name: 'Lata MATERO'}];
-const allBranches = [{id: 1, name: 'Depósito Central'}, {id: 2, name: 'Sucursal Córdoba'}, {id: 3, name: 'Sucursal Mendoza'}];
-
 const Movements = () => {
-    // ESTADOS PRINCIPALES
-    const [movements, setMovements] = useState(mockMovementsData);
+    // 1. OBTENEMOS TODOS LOS DATOS Y FUNCIONES DE LOS CONTEXTOS
+    const { movements, addMovement, products, branches, users, loading } = useData();
+    const { user } = useAuth();
+
+    // Estados locales para el filtro y el modal
     const [showModal, setShowModal] = useState(false);
-    const [filter, setFilter] = useState('all'); // Estado para el filtro: 'all', 'incoming', 'outgoing'
-    
-    // Estado para el formulario del modal
+    const [filter, setFilter] = useState('all');
     const [newMovementData, setNewMovementData] = useState({
-        type: '',
-        productId: '',
-        branchId: '',
+        movement_type: '',
+        product: '',
+        branch: '',
         quantity: '',
         description: ''
     });
 
-    // --- LÓGICA DE MANEJO ---
+    // Lógica para manejar el modal y el formulario
     const handleCloseModal = () => setShowModal(false);
     const handleShowModal = () => {
-        // Reseteamos el formulario cada vez que se abre el modal
-        setNewMovementData({ type: '', productId: '', branchId: '', quantity: '', description: '' });
+        setNewMovementData({ movement_type: '', product: '', branch: '', quantity: '', description: '' });
         setShowModal(true);
     };
 
     const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        setNewMovementData(prev => ({ ...prev, [name]: value }));
+        setNewMovementData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    const handleSaveChanges = () => {
-        if (!newMovementData.type || !newMovementData.productId || !newMovementData.branchId || !newMovementData.quantity) {
+    const handleSaveChanges = async () => {
+        if (!newMovementData.movement_type || !newMovementData.product || !newMovementData.branch || !newMovementData.quantity) {
             alert('Por favor, completa todos los campos obligatorios.');
             return;
         }
-
-        const newMovement = {
-            id: Date.now(),
-            date: new Date().toISOString(),
-            type: newMovementData.type,
-            productName: allProducts.find(p => p.id === parseInt(newMovementData.productId))?.name || 'Desconocido',
-            quantity: parseInt(newMovementData.quantity),
-            branchName: allBranches.find(b => b.id === parseInt(newMovementData.branchId))?.name || 'Desconocida',
-            userName: 'joaco', // Esto debería venir del contexto de Auth en una app real
-            description: newMovementData.description,
-        };
-
-        // Añadimos el nuevo movimiento al principio de la lista
-        setMovements(prevMovements => [newMovement, ...prevMovements]);
-        
-        console.log('Guardando nuevo movimiento:', newMovement);
-        handleCloseModal();
+        try {
+            await addMovement({ ...newMovementData, user: user.user_id });
+            handleCloseModal();
+        } catch (error) {
+            console.log("El formulario no se cerrará debido a un error de la API.");
+        }
     };
 
-    // LÓGICA PARA FILTRAR LOS MOVIMIENTOS
-    const filteredMovements = movements.filter(movement => {
-        if (filter === 'all') return true;
-        return movement.type === filter;
-    });
+    // 2. "ENRIQUECEMOS" LOS DATOS DE MOVIMIENTOS ANTES DE MOSTRARLOS
+    // Usamos useMemo para optimizar y que este cálculo no se rehaga innecesariamente.
+    const displayMovements = useMemo(() => {
+        if (loading || !Array.isArray(movements)) return [];
+        
+        return movements.map(mov => {
+            const product = products.find(p => p.id === mov.product);
+            const branch = branches.find(b => b.id === mov.branch);
+            const movementUser = users.find(u => u.id === mov.user);
+            
+            // Corrección de la fecha
+            let validDate = null;
+            if (mov.date) {
+                const parsed = new Date(mov.date.replace(' ', 'T'));
+                if (!isNaN(parsed.getTime())) {
+                    validDate = parsed;
+                }
+            }
+
+            return {
+                ...mov,
+                productName: product ? product.name : 'N/A',
+                branchName: branch ? branch.name : 'N/A',
+                userName: movementUser ? movementUser.username : 'N/A',
+                parsedDate: validDate
+            };
+        });
+    }, [movements, products, branches, users, loading]);
+
+    // La lógica de filtrado ahora opera sobre los datos enriquecidos
+    const filteredMovements = displayMovements.filter(mov => filter === 'all' || mov.movement_type === filter);
+
+    if (loading) {
+        return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
+    }
 
     return (
         <Container fluid className="movements-container">
@@ -89,7 +99,6 @@ const Movements = () => {
                     <Row className="align-items-center">
                         <Col xs={12} md={6}><h5 className="mb-0">Historial de Movimientos</h5></Col>
                         <Col xs={12} md={6} className="d-flex justify-content-end align-items-center">
-                            {/* DROPDOWN DE FILTRO AHORA FUNCIONAL */}
                             <Dropdown onSelect={(eventKey) => setFilter(eventKey)}>
                                 <Dropdown.Toggle variant="light" id="dropdown-type">
                                     Filtrar: {filter === 'all' ? 'Todos' : (filter === 'incoming' ? 'Entradas' : 'Salidas')}
@@ -116,26 +125,31 @@ const Movements = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {/* LA TABLA AHORA MUESTRA LOS DATOS FILTRADOS */}
                         {filteredMovements.map((movement) => (
                             <tr key={movement.id}>
-                                <td>
-                                    <div>{new Date(movement.date).toLocaleDateString()}</div>
-                                    <small className="text-muted">{new Date(movement.date).toLocaleTimeString()}</small>
+                                <td data-label="Fecha y Hora">
+                                    {movement.parsedDate ? (
+                                        <>
+                                            <div>{movement.parsedDate.toLocaleDateString()}</div>
+                                            <small className="text-muted">{movement.parsedDate.toLocaleTimeString()}</small>
+                                        </>
+                                    ) : (
+                                        <span>Fecha inválida</span>
+                                    )}
                                 </td>
-                                <td>
-                                    <span className={movement.type === 'incoming' ? 'badge-in' : 'badge-out'}>
-                                        {movement.type === 'incoming' ? <BsArrowDown className="me-2" /> : <BsArrowUp className="me-2" />}
-                                        {movement.type === 'incoming' ? 'Entrada' : 'Salida'}
+                                <td data-label="Tipo">
+                                    <span className={movement.movement_type === 'incoming' ? 'badge-in' : 'badge-out'}>
+                                        {movement.movement_type === 'incoming' ? <BsArrowDown className="me-2" /> : <BsArrowUp className="me-2" />}
+                                        {movement.movement_type === 'incoming' ? 'Entrada' : 'Salida'}
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="Producto">
                                     <div>{movement.productName}</div>
                                     <small className="text-muted">{movement.description}</small>
                                 </td>
-                                <td className="fw-bold text-center">{movement.quantity}</td>
-                                <td>{movement.branchName}</td>
-                                <td>{movement.userName}</td>
+                                <td data-label="Cantidad" className="fw-bold text-center">{movement.quantity}</td>
+                                <td data-label="Sucursal">{movement.branchName}</td>
+                                <td data-label="Usuario">{movement.userName}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -145,11 +159,10 @@ const Movements = () => {
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton><Modal.Title>Registrar Nuevo Movimiento</Modal.Title></Modal.Header>
                 <Modal.Body>
-                    {/* FORMULARIO AHORA FUNCIONAL */}
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Tipo de Movimiento</Form.Label>
-                            <Form.Select name="type" value={newMovementData.type} onChange={handleFormChange}>
+                            <Form.Select name="movement_type" value={newMovementData.movement_type} onChange={handleFormChange}>
                                 <option value="">Selecciona un tipo...</option>
                                 <option value="incoming">Entrada</option>
                                 <option value="outgoing">Salida</option>
@@ -157,23 +170,23 @@ const Movements = () => {
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Producto</Form.Label>
-                            <Form.Select name="productId" value={newMovementData.productId} onChange={handleFormChange}>
+                            <Form.Select name="product" value={newMovementData.product} onChange={handleFormChange}>
                                 <option value="">Selecciona un producto...</option>
-                                {allProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Sucursal</Form.Label>
-                            <Form.Select name="branchId" value={newMovementData.branchId} onChange={handleFormChange}>
+                            <Form.Select name="branch" value={newMovementData.branch} onChange={handleFormChange}>
                                 <option value="">Selecciona una sucursal...</option>
-                                {allBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Cantidad</Form.Label>
-                            <Form.Control type="number" name="quantity" value={newMovementData.quantity} onChange={handleFormChange} placeholder="Ingresa la cantidad" />
+                            <Form.Control type="number" name="quantity" value={newMovementData.quantity} onChange={handleFormChange} placeholder="Ingresa la cantidad" min="1" />
                         </Form.Group>
-                        <Form.Group className="mb-3">
+                        <Form.Group>
                             <Form.Label>Descripción (Opcional)</Form.Label>
                             <Form.Control as="textarea" rows={3} name="description" value={newMovementData.description} onChange={handleFormChange} placeholder="Ej: Venta a cliente, ingreso de proveedor..." />
                         </Form.Group>
