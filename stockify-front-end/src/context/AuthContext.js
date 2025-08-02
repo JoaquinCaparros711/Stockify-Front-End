@@ -1,6 +1,4 @@
-"use client"
-
-import { createContext, useState, useContext } from "react"
+import { createContext, useState, useContext, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "../services/api"
 import { jwtDecode } from "jwt-decode"
@@ -10,133 +8,136 @@ const AuthContext = createContext(null)
 export const AuthProvider = ({ children }) => {
     const navigate = useNavigate()
 
-    const [user, setUser] = useState(() => {
-        const token = localStorage.getItem("accessToken")
-        const userData = localStorage.getItem("userData")
+    const [user, setUser] = useState(null)
+    const [loading, setLoading] = useState(true)
 
-        if (token && userData) {
-        try {
-            return JSON.parse(userData)
-        } catch (error) {
-            console.error("Error parsing user data:", error)
-            return null
-        }
-        }
-        return null
-    })
+    // ✅ Verificar token y restaurar sesión si existe
+    useEffect(() => {
+        const initializeAuth = async () => {
+            const access = localStorage.getItem("accessToken")
+            const savedProfile = localStorage.getItem("userProfile")
 
-    // Función para obtener los datos completos del usuario
-    const fetchUserData = async (token) => {
-        try {
-        const response = await api.get("/user/profile/", {
-            headers: {
-            Authorization: `Bearer ${token}`,
-            },
-        })
-        return response.data
-        } catch (error) {
-        console.error("Error fetching user data:", error)
-        return null
+            if (access) {
+                try {
+                    const decoded = jwtDecode(access)
+                    const userId = decoded.user_id
+
+                    if (savedProfile) {
+                        setUser(JSON.parse(savedProfile))
+                    } else {
+                        const res = await api.get(`/user/register/${userId}/`)
+                        localStorage.setItem("userProfile", JSON.stringify(res.data))
+                        setUser(res.data)
+                    }
+
+                    // Opcional: set token en axios headers por si hace falta
+                    api.defaults.headers.common["Authorization"] = `Bearer ${access}`
+
+                } catch (e) {
+                    console.error("Error al cargar sesión persistida:", e)
+                    localStorage.removeItem("accessToken")
+                    localStorage.removeItem("refreshToken")
+                    localStorage.removeItem("userProfile")
+                    setUser(null)
+                }
+            }
+
+            setLoading(false)
         }
-    }
+
+        initializeAuth()
+    }, [])
 
     const login = async (data) => {
         try {
-        const response = await api.post("/user/login/", {
-            username: data.username,
-            password: data.password,
-        })
+            const response = await api.post("/user/login/", {
+                username: data.username,
+                password: data.password,
+            })
 
-        const { access, refresh } = response.data
+            const { access, refresh } = response.data
+            localStorage.setItem("accessToken", access)
+            localStorage.setItem("refreshToken", refresh)
 
-        localStorage.setItem("accessToken", access)
-        localStorage.setItem("refreshToken", refresh)
+            const decodedToken = jwtDecode(access)
+            const userId = decodedToken.user_id;
 
-        // Decodificar el token para obtener información básica
-        const decodedUser = jwtDecode(access)
-        console.log("Token decodificado:", decodedUser) // Para debugging
+            const userProfileResponse = await api.get(`/user/register/${userId}/`);
+            const userProfile = userProfileResponse.data;
 
-        // Intentar obtener datos completos del usuario
-        const fullUserData = await fetchUserData(access)
+            localStorage.setItem("userProfile", JSON.stringify(userProfile));
+            setUser(userProfile)
 
-        const userData = fullUserData || {
-            id: decodedUser.user_id || decodedUser.id,
-            username: decodedUser.username || data.username,
-            name: decodedUser.name || decodedUser.username || data.username,
-            email: decodedUser.email || "",
-        }
+            // Set Authorization en axios
+            api.defaults.headers.common["Authorization"] = `Bearer ${access}`
 
-        console.log("Datos del usuario:", userData) // Para debugging
-
-        // Guardar los datos del usuario en localStorage
-        localStorage.setItem("userData", JSON.stringify(userData))
-        setUser(userData)
-        navigate("/")
+            navigate("/")
         } catch (error) {
-        console.error("Error en el login:", error.response?.data)
-        alert("Error: Usuario o contraseña incorrectos.")
+            console.error("Error en el login:", error.response?.data)
+            alert("Error: Usuario o contraseña incorrectos.")
         }
     }
 
     const register = async (formData) => {
         try {
-        const response = await api.post("/user/register/", {
-            username: formData.username,
-            password: formData.password,
-            password2: formData.confirmPassword,
-            email: formData.email,
-            name: formData.name,
-
-            company: {
-            name: formData.companyName,
-            cuit: formData.companyCuit,
-            email: formData.companyEmail,
-            phone: formData.companyPhone,
-            address: formData.companyAddress,
-            },
-        })
-
-        console.log("Registro exitoso:", response.data)
-        alert("¡Cuenta creada con éxito! Ahora puedes iniciar sesión.")
-        navigate("/login")
-        } catch (error) {
-        console.error("Error en el registro:", error.response?.data)
-        const errorData = error.response?.data
-        let errorMessage = "Ocurrió un error en el registro."
-        if (errorData) {
-            errorMessage = Object.keys(errorData)
-            .map((key) => {
-                if (key === "company" && typeof errorData[key] === "object") {
-                return Object.keys(errorData[key])
-                    .map((companyKey) => `Empresa - ${companyKey}: ${errorData[key][companyKey]}`)
-                    .join("\n")
-                }
-                return `${key}: ${errorData[key]}`
+            await api.post("/user/register/", {
+                username: formData.username,
+                password: formData.password,
+                password2: formData.confirmPassword,
+                email: formData.email,
+                name: formData.name,
+                company: {
+                    name: formData.companyName,
+                    cuit: formData.companyCuit,
+                    email: formData.companyEmail,
+                    phone: formData.companyPhone,
+                    address: formData.companyAddress,
+                },
             })
-            .join("\n")
+
+            alert("¡Cuenta creada con éxito! Ahora puedes iniciar sesión.")
+            navigate("/login")
+        } catch (error) {
+            const errorData = error.response?.data
+            let errorMessage = "Ocurrió un error en el registro."
+            if (errorData) {
+                errorMessage = Object.keys(errorData)
+                    .map((key) => {
+                        if (key === "company" && typeof errorData[key] === "object") {
+                            return Object.keys(errorData[key])
+                                .map((companyKey) => `Empresa - ${companyKey}: ${errorData[key][companyKey]}`)
+                                .join("\n")
+                        }
+                        return `${key}: ${errorData[key]}`
+                    })
+                    .join("\n")
+            }
+            alert(errorMessage)
         }
-        alert(errorMessage)
+    }
+
+    const logout = async () => {
+        try {
+            const refreshToken = localStorage.getItem("refreshToken")
+            if (refreshToken) {
+                await api.post("/user/logout/", { refresh: refreshToken })
+            }
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error)
+        } finally {
+            setUser(null)
+            localStorage.removeItem("accessToken")
+            localStorage.removeItem("refreshToken")
+            localStorage.removeItem("userProfile")
+            navigate("/login")
         }
     }
 
-    const logout = () => {
-        setUser(null)
-        localStorage.removeItem("accessToken")
-        localStorage.removeItem("refreshToken")
-        localStorage.removeItem("userData")
-        navigate("/login")
-    }
-
-    const value = {
-        user,
-        login,
-        logout,
-        register,
-    }
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    return (
+        <AuthContext.Provider value={{ user, login, logout, register }}>
+            {!loading && children}
+        </AuthContext.Provider>
+    )
 }
 
-export const useAuth = () => {
-    return useContext(AuthContext)
-}
+export const useAuth = () => useContext(AuthContext)

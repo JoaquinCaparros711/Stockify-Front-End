@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Button, Card, Table, Modal, Form } from 'react-bootstrap';
-import { BsPlus, BsPencilFill, BsTrashFill } from 'react-icons/bs';
-import './Branchs.css'; // <-- CAMBIAMOS AL NUEVO ARCHIVO CSS
-
-const mockBranches = [
-    { id: 1, name: 'Depósito Central', address: 'Av. Siempre Viva 742', phone: '2604112233' },
-    { id: 2, name: 'Sucursal Córdoba', address: 'Bv. Chacabuco 1100', phone: '3514998877' },
-    { id: 3, name: 'Sucursal Mendoza', address: 'Av. San Martín 950', phone: '2614665544' },
-];
+import { Container, Button, Card, Table, Modal, Form, Spinner } from 'react-bootstrap';
+import { BsBuilding, BsPlus, BsPencilFill, BsTrashFill } from 'react-icons/bs';
+import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
+import './Branchs.css';
 
 const Sucursales = () => {
-    const [branches, setBranches] = useState(mockBranches);
+    const { branches, loading, addBranch, updateBranch, deleteBranch } = useData();
+    const { user } = useAuth();
+
     const [showModal, setShowModal] = useState(false);
     const [editingBranch, setEditingBranch] = useState(null);
     const [formData, setFormData] = useState({ name: '', address: '', phone: '' });
@@ -21,7 +19,7 @@ const Sucursales = () => {
         } else {
             setFormData({ name: '', address: '', phone: '' });
         }
-    }, [editingBranch]);
+    }, [editingBranch, showModal]);
 
     const handleCloseModal = () => {
         setShowModal(false);
@@ -43,23 +41,36 @@ const Sucursales = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSaveChanges = () => {
-        if (editingBranch) {
-            console.log('Actualizando sucursal:', formData);
-            setBranches(branches.map(b => (b.id === editingBranch.id ? { ...formData, id: b.id } : b)));
-        } else {
-            console.log('Creando nueva sucursal:', formData);
-            setBranches([...branches, { ...formData, id: Date.now() }]);
+    const handleSaveChanges = async () => {
+        if (!formData.name || !formData.address || !formData.phone) {
+            alert("Por favor, completa todos los campos.");
+            return;
         }
-        handleCloseModal();
+        try {
+            if (editingBranch) {
+                await updateBranch(editingBranch.id, formData);
+            } else {
+                await addBranch(formData);
+            }
+            handleCloseModal();
+        } catch (error) {
+            console.log("La API devolvió un error, el modal no se cerrará.");
+        }
     };
     
     const handleDeleteBranch = (id) => {
         if (window.confirm('¿Estás seguro de que quieres eliminar esta sucursal?')) {
-            console.log('Eliminando sucursal con id:', id);
-            setBranches(branches.filter(b => b.id !== id));
+            deleteBranch(id);
         }
     };
+
+    // --- COMPROBACIÓN DE ROL MÁS ROBUSTA ---
+    // Verificamos que el usuario exista y convertimos su rol a minúsculas antes de comparar.
+    const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
+
+    if (loading) {
+        return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
+    }
 
     return (
         <Container fluid className="branches-container">
@@ -68,49 +79,67 @@ const Sucursales = () => {
                     <h1 className="page-title">Gestión de Sucursales</h1>
                     <p className="page-subtitle">Crea, edita y administra las ubicaciones de tu negocio.</p>
                 </div>
-                <Button className="btn-add-branch shadow-sm" onClick={handleShowAddModal}>
-                    <BsPlus size={22} className="me-2" />
-                    Agregar Sucursal
-                </Button>
+                {/* Ahora usamos la variable 'isAdmin' para decidir si mostrar el botón */}
+                {isAdmin && (
+                    <Button className="btn-add-branch shadow-sm" onClick={handleShowAddModal}>
+                        <BsPlus size={22} className="me-2" />
+                        Agregar Sucursal
+                    </Button>
+                )}
             </header>
 
             <Card className="shadow-sm branches-table-card">
-                <Table responsive className="branches-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Dirección</th>
-                            <th>Teléfono</th>
-                            <th className="text-end">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {branches.map((branch) => (
-                            <tr key={branch.id}>
-                                <td className="fw-bold">{branch.name}</td>
-                                <td>{branch.address}</td>
-                                <td>{branch.phone}</td>
-                                <td className="text-end">
-                                    <Button variant="light" size="sm" className="me-2 action-btn" onClick={() => handleShowEditModal(branch)}>
-                                        <BsPencilFill />
-                                    </Button>
-                                    <Button variant="light" size="sm" className="action-btn action-btn-danger" onClick={() => handleDeleteBranch(branch.id)}>
-                                        <BsTrashFill />
-                                    </Button>
-                                </td>
+                <Card.Header className="bg-white border-0 py-3">
+                    <h5 className="mb-0">Lista de Sucursales</h5>
+                </Card.Header>
+                <Card.Body>
+                    <Table responsive className="branches-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Dirección</th>
+                                <th>Teléfono</th>
+                                {isAdmin && <th className="text-end">Acciones</th>}
                             </tr>
-                        ))}
-                    </tbody>
-                </Table>
+                        </thead>
+                        <tbody>
+                            {branches && branches.length > 0 ? (
+                                branches.map((branch) => (
+                                    <tr key={branch.id}>
+                                        <td data-label="Nombre" className="fw-bold">{branch.name}</td>
+                                        <td data-label="Dirección">{branch.address}</td>
+                                        <td data-label="Teléfono">{branch.phone}</td>
+                                        {isAdmin && (
+                                            <td data-label="Acciones" className="text-end">
+                                                <Button variant="light" size="sm" className="me-2 action-btn" onClick={() => handleShowEditModal(branch)}>
+                                                    <BsPencilFill />
+                                                </Button>
+                                                <Button variant="light" size="sm" className="action-btn action-btn-danger" onClick={() => handleDeleteBranch(branch.id)}>
+                                                    <BsTrashFill />
+                                                </Button>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={isAdmin ? 4 : 3} className="text-center text-muted py-5">
+                                        No hay sucursales para mostrar.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </Card.Body>
             </Card>
 
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton><Modal.Title>{editingBranch ? 'Editar Sucursal' : 'Agregar Nueva Sucursal'}</Modal.Title></Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group className="mb-3"><Form.Label>Nombre de la Sucursal</Form.Label><Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Ej: Depósito Principal" /></Form.Group>
-                        <Form.Group className="mb-3"><Form.Label>Dirección</Form.Label><Form.Control type="text" name="address" value={formData.address} onChange={handleFormChange} placeholder="Ej: Av. San Martín 123" /></Form.Group>
-                        <Form.Group className="mb-3"><Form.Label>Teléfono</Form.Label><Form.Control type="text" name="phone" value={formData.phone} onChange={handleFormChange} placeholder="Ej: 2604123456" /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Nombre de la Sucursal</Form.Label><Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Ej: Depósito Principal" required /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Dirección</Form.Label><Form.Control type="text" name="address" value={formData.address} onChange={handleFormChange} placeholder="Ej: Av. San Martín 123" required /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Teléfono</Form.Label><Form.Control type="text" name="phone" value={formData.phone} onChange={handleFormChange} placeholder="Ej: 2604409751" required /></Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>

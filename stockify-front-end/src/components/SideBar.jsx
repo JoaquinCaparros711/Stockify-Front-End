@@ -64,15 +64,9 @@ const SideBar = () => {
       alert("Las nuevas contraseñas no coinciden.")
       return
     }
-    console.log("Guardando perfil:", profileData)
     alert("Perfil actualizado (simulación). Los cambios se reflejarán al volver a iniciar sesión.")
     handleCloseProfileModal()
   }
-
-  // Debug: mostrar en consola los datos del usuario
-  useEffect(() => {
-    console.log("Datos del usuario en sidebar:", user)
-  }, [user])
 
   return (
     <>

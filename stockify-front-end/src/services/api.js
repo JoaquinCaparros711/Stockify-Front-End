@@ -46,8 +46,8 @@ api.interceptors.response.use(
                 // Obtenemos el refreshToken guardado.
                 const refreshToken = localStorage.getItem('refreshToken');
                 if (!refreshToken) {
-                    // Si no hay refresh token, redirigimos al login (o manejamos el logout).
-                    window.location.href = '/login';
+                    // Si no hay refresh token, disparamos el evento de logout
+                    window.dispatchEvent(new Event('logout'));
                     return Promise.reject(error);
                 }
 
@@ -71,11 +71,10 @@ api.interceptors.response.use(
                 return api(originalRequest);
 
             } catch (refreshError) {
-                // Si el refresco del token también falla, limpiamos todo y redirigimos al login.
-                console.error("No se pudo refrescar el token", refreshError);
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
+                // Si el refresco del token también falla, en lugar de recargar la página,
+                // disparamos un evento personalizado para que la app reaccione.
+                console.error("No se pudo refrescar el token, cerrando sesión.", refreshError);
+                window.dispatchEvent(new Event('logout'));
                 return Promise.reject(refreshError);
             }
         }

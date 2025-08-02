@@ -1,47 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Button, Card, Table, Modal, Form, Row, Col } from 'react-bootstrap';
-import { BsPlus, BsPencilFill, BsTrashFill } from 'react-icons/bs';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Container, Button, Card, Table, Modal, Form, Row, Col, Badge, Spinner } from 'react-bootstrap';
+import { BsPeopleFill, BsPlus, BsPencilFill, BsTrashFill } from 'react-icons/bs';
+import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import './Users.css';
 
-const mockUsers = [
-    { id: 1, name: 'Joaquín (Admin)', username: 'joaco', email: 'joaco@test.com', role: 'admin', branchId: null },
-    { id: 2, name: 'Carlos (Empleado)', username: 'vendedor1', email: 'carlos@test.com', role: 'employee', branchId: 2 },
-    { id: 3, name: 'Ana (Empleada)', username: 'vendedora_mza', email: 'ana@test.com', role: 'employee', branchId: 3 },
-];
-const mockBranches = [{ id: 1, name: 'Depósito Central' }, { id: 2, name: 'Sucursal Córdoba' }, { id: 3, name: 'Sucursal Mendoza' }];
-
 const Users = () => {
-    const [users, setUsers] = useState(mockUsers);
+    // 1. OBTENEMOS TODOS LOS DATOS Y FUNCIONES DE LOS CONTEXTOS
+    const { users, branches, loading, addUserByAdmin, updateUser, deleteUser } = useData();
+    const { user: loggedInUser } = useAuth();
+
+    // Estados locales para el modal y el formulario
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
-    const [formData, setFormData] = useState({ name: '', username: '', email: '', password: '', confirmPassword: '', role: 'employee', branchId: '' });
+    const [formData, setFormData] = useState({ name: '', username: '', email: '', password: '', confirmPassword: '', role: 'employee', branch: '' });
 
-    useEffect(() => { if (editingUser) { setFormData({ ...editingUser, password: '', confirmPassword: '' }); } else { setFormData({ name: '', username: '', email: '', password: '', confirmPassword: '', role: 'employee', branchId: '' }); } }, [editingUser]);
+    useEffect(() => {
+        if (editingUser) {
+            setFormData({ ...editingUser, branch: editingUser.branch || '', password: '', confirmPassword: '' });
+        } else {
+            setFormData({ name: '', username: '', email: '', password: '', confirmPassword: '', role: 'employee', branch: '' });
+        }
+    }, [editingUser, showModal]);
+
     const handleCloseModal = () => { setShowModal(false); setEditingUser(null); };
     const handleShowAddModal = () => { setEditingUser(null); setShowModal(true); };
-    const handleShowEditModal = (user) => { setEditingUser(user); setShowModal(true); };
-    const handleFormChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
-    const handleSaveChanges = () => {
-        if (!editingUser && formData.password !== formData.confirmPassword) {
+    const handleShowEditModal = (userToEdit) => { setEditingUser(userToEdit); setShowModal(true); };
+    const handleFormChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+    const handleSaveChanges = async () => {
+        if (!formData.name || !formData.username || !formData.email) {
+            alert("Nombre, Usuario y Email son obligatorios.");
+            return;
+        }
+        if (!editingUser && !formData.password) {
+            alert("La contraseña es obligatoria para nuevos usuarios.");
+            return;
+        }
+        if (formData.password && formData.password !== formData.confirmPassword) {
             alert('Las contraseñas no coinciden.');
             return;
         }
-        if (editingUser) {
-            console.log('Actualizando usuario:', formData);
-            setUsers(users.map(u => (u.id === editingUser.id ? { ...formData, id: u.id } : u)));
-        } else {
-            console.log('Creando nuevo usuario:', formData);
-            setUsers([...users, { ...formData, id: Date.now() }]);
+
+        try {
+            if (editingUser) {
+                const dataToUpdate = { ...formData };
+                if (!dataToUpdate.password) {
+                    delete dataToUpdate.password;
+                    delete dataToUpdate.confirmPassword;
+                }
+                await updateUser(editingUser.id, dataToUpdate);
+            } else {
+                const payload = { ...formData, password2: formData.confirmPassword };
+                await addUserByAdmin(payload);
+            }
+            handleCloseModal();
+        } catch (error) {
+            console.log("La API devolvió un error, el modal no se cerrará.");
         }
-        handleCloseModal();
     };
+    
     const handleDeleteUser = (id) => {
         if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-            console.log('Eliminando usuario con id:', id);
-            setUsers(users.filter(u => u.id !== id));
+            deleteUser(id);
         }
     };
-    const getBranchName = (branchId) => { if (!branchId) return 'N/A'; const branch = mockBranches.find(b => b.id === branchId); return branch ? branch.name : 'Desconocida'; };
+    
+    // --- 2. LÓGICA CLAVE PARA "ENRIQUECER" LOS DATOS DE USUARIOS ---
+    const displayUsers = useMemo(() => {
+        // Solo procesamos si no está cargando y si ambos arrays necesarios tienen datos
+        if (loading || !users.length || !branches.length) {
+            return [];
+        }
+        
+        return users.map(user => {
+            const branch = branches.find(b => b.id === user.branch);
+            return {
+                ...user,
+                branchName: branch ? branch.name : 'N/A' // Creamos una nueva propiedad con el nombre
+            };
+        });
+    }, [users, branches, loading]); // Dependencias del useMemo
+
+    const isAdmin = loggedInUser && loggedInUser.role === 'admin';
+
+    if (loading) {
+        return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
+    }
 
     return (
         <Container fluid className="users-container">
@@ -50,10 +95,12 @@ const Users = () => {
                     <h1 className="page-title">Gestión de Usuarios</h1>
                     <p className="page-subtitle">Crea, edita y asigna roles a los usuarios de tu sistema.</p>
                 </div>
-                <Button className="btn-add-user shadow-sm" onClick={handleShowAddModal}>
-                    <BsPlus size={22} className="me-2" />
-                    Agregar Usuario
-                </Button>
+                {isAdmin && (
+                    <Button className="btn-add-user shadow-sm" onClick={handleShowAddModal}>
+                        <BsPlus size={22} className="me-2" />
+                        Agregar Usuario
+                    </Button>
+                )}
             </header>
 
             <Card className="shadow-sm users-table-card">
@@ -61,40 +108,46 @@ const Users = () => {
                     <thead>
                         <tr>
                             <th>Usuario</th>
+                            <th>Username</th>
                             <th>Rol</th>
                             <th>Sucursal Asignada</th>
-                            <th className="text-end">Acciones</th>
+                            {isAdmin && <th className="text-end">Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map((user) => (
-                            <tr key={user.id}>
-                                <td data-label="Usuario">
-                                    <div className="user-cell">
-                                        <img src={`https://ui-avatars.com/api/?name=${user.name.replace(' ', '+')}&background=random`} alt={user.name} className="user-avatar" />
-                                        <div className="user-cell-info">
-                                            <div>{user.name}</div>
-                                            <small className="text-muted">{user.email}</small>
+                        {displayUsers && displayUsers.length > 0 ? (
+                            // 3. LA TABLA AHORA USA LOS DATOS ENRIQUECIDOS
+                            displayUsers.map((user) => (
+                                <tr key={user.id ?? `user-fallback-${user.username}-${user.email}`}>
+                                    <td data-label="Usuario">
+                                        <div className="user-cell">
+                                            <img src={`https://ui-avatars.com/api/?name=${user.name.replace(' ', '+')}&background=random`} alt={user.name} className="user-avatar" />
+                                            <div className="user-cell-info">
+                                                <div>{user.name}</div>
+                                                <small className="text-muted">{user.email}</small>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td data-label="Rol"><span className={`badge-role ${user.role === 'admin' ? 'badge-role-admin' : 'badge-role-employee'}`}>{user.role}</span></td>
-                                <td data-label="Sucursal">{getBranchName(user.branchId)}</td>
-                                <td data-label="Acciones" className="text-end">
-                                    <Button variant="light" size="sm" className="me-2 action-btn" onClick={() => handleShowEditModal(user)}><BsPencilFill /></Button>
-                                    <Button variant="light" size="sm" className="action-btn action-btn-danger" onClick={() => handleDeleteUser(user.id)}><BsTrashFill /></Button>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td data-label="Username">{user.username}</td>
+                                    <td data-label="Rol"><span className={`badge-role ${user.role === 'admin' ? 'badge-role-admin' : 'badge-role-employee'}`}>{user.role}</span></td>
+                                    <td data-label="Sucursal Asignada">{user.branchName}</td>
+                                    {isAdmin && (
+                                        <td data-label="Acciones" className="text-end">
+                                            <Button variant="light" size="sm" className="me-2 action-btn" onClick={() => handleShowEditModal(user)}><BsPencilFill /></Button>
+                                            <Button variant="light" size="sm" className="action-btn action-btn-danger" onClick={() => handleDeleteUser(user.id)}><BsTrashFill /></Button>
+                                        </td>
+                                    )}
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan={isAdmin ? 4 : 3} className="text-center text-muted py-5">No hay usuarios para mostrar.</td></tr>
+                        )}
                     </tbody>
                 </Table>
             </Card>
 
-            {/* --- CONTENIDO DEL MODAL REINSERTADO --- */}
             <Modal show={showModal} onHide={handleCloseModal} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editingUser ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}</Modal.Title>
-                </Modal.Header>
+                <Modal.Header closeButton><Modal.Title>{editingUser ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}</Modal.Title></Modal.Header>
                 <Modal.Body>
                     <Form>
                         <Form.Group className="mb-3"><Form.Label>Nombre Completo</Form.Label><Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} /></Form.Group>
@@ -109,7 +162,7 @@ const Users = () => {
                         <Row>
                             <Col><Form.Group className="mb-3"><Form.Label>Rol</Form.Label><Form.Select name="role" value={formData.role} onChange={handleFormChange}><option value="employee">Empleado</option><option value="admin">Admin</option></Form.Select></Form.Group></Col>
                             {formData.role === 'employee' && (
-                                <Col><Form.Group className="mb-3"><Form.Label>Sucursal</Form.Label><Form.Select name="branchId" value={formData.branchId} onChange={handleFormChange}><option value="">Seleccionar sucursal...</option>{mockBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</Form.Select></Form.Group></Col>
+                                <Col><Form.Group className="mb-3"><Form.Label>Sucursal</Form.Label><Form.Select name="branch" value={formData.branch} onChange={handleFormChange}><option value="">Seleccionar sucursal...</option>{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</Form.Select></Form.Group></Col>
                             )}
                         </Row>
                     </Form>

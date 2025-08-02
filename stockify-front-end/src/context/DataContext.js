@@ -81,13 +81,6 @@ export const DataProvider = ({ children }) => {
             throw error;
         }
     };
-
-    const fetchBranchStock = async () => {
-        try {
-            const response = await api.get('/control/model/branch_stock/');
-            setBranchStock(response.data);
-        } catch (error) { console.error("Error al cargar el stock:", error); }
-    };
     
     // --- LÓGICA DE API PARA SUCURSALES Y USUARIOS ---
     const fetchBranches = async () => {
@@ -95,6 +88,43 @@ export const DataProvider = ({ children }) => {
             const response = await api.get('/control/model/branch/');
             setBranches(response.data);
         } catch (error) { console.error("Error al cargar sucursales:", error); }
+    };
+
+    // --- FUNCIONES CRUD PARA SUCURSALES (AÑADIDAS) ---
+    const addBranch = async (branchData) => {
+        try {
+            await api.post('/control/model/branch/', branchData);
+            await fetchBranches(); // Refrescamos la lista para mostrar la nueva sucursal
+            alert('¡Sucursal creada con éxito!');
+        } catch (error) {
+            console.error("Error al crear la sucursal:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error; // Lanzamos el error para que el componente lo maneje
+        }
+    };
+
+    const updateBranch = async (branchId, branchData) => {
+        try {
+            await api.put(`/control/model/branch/${branchId}/`, branchData);
+            await fetchBranches(); // Refrescamos la lista
+            alert('¡Sucursal actualizada con éxito!');
+        } catch (error) {
+            console.error("Error al actualizar la sucursal:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    const deleteBranch = async (branchId) => {
+        try {
+            await api.delete(`/control/model/branch/${branchId}/`);
+            await fetchBranches(); // Refrescamos la lista
+            alert('Sucursal eliminada con éxito.');
+        } catch (error) {
+            console.error("Error al eliminar la sucursal:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
     };
     
     const fetchUsers = async () => {
@@ -105,14 +135,48 @@ export const DataProvider = ({ children }) => {
         } catch (error) { console.error("Error al cargar usuarios:", error); }
     };
 
+    const fetchBranchStock = async () => {
+        try {
+            const response = await api.get('/control/model/branch_stock/');
+            setBranchStock(response.data);
+        } catch (error) { console.error("Error al cargar el stock:", error); }
+    };
+
+    // --- FUNCIONES CRUD PARA STOCK ---
+    const addBranchStock = async (stockData) => {
+        try {
+            await api.post('/control/model/branch_stock/', stockData);
+            await fetchBranchStock(); // Refrescamos la lista de stock
+            alert('Producto ingresado al stock con éxito.');
+        } catch (error) {
+            console.error("Error al ingresar producto al stock:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    const adjustStock = async (stockId, stockData) => {
+        try {
+            // Usamos PATCH para actualizar solo los campos que enviamos (current_stock)
+            await api.patch(`/control/model/branch_stock/${stockId}/`, stockData);
+            await fetchBranchStock(); // Refrescamos la lista de stock
+            // También refrescamos los movimientos para registrar el ajuste si lo implementas
+            await fetchMovements(); 
+            alert('Stock ajustado con éxito.');
+        } catch (error) {
+            console.error("Error al ajustar el stock:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+
     // Efecto para cargar todos los datos cuando el usuario inicia sesión
     useEffect(() => {
         const loadAllData = async () => {
-            if (!user) return; // Si no hay usuario, no hacemos nada
-            
+            if (!user) return;
             setLoading(true);
             try {
-                // Hacemos todas las peticiones en paralelo para mayor eficiencia
                 await Promise.all([
                     fetchProducts(),
                     fetchMovements(),
@@ -126,9 +190,46 @@ export const DataProvider = ({ children }) => {
                 setLoading(false);
             }
         };
-
         loadAllData();
-    }, [user]); // Este efecto se ejecuta cada vez que el usuario cambia (login/logout)
+    }, [user]);
+
+    const addUserByAdmin = async (userData) => {
+        try {
+            // Usamos el endpoint específico que creaste para esta acción
+            await api.post('/user/admin/create-user/', userData);
+            await fetchUsers(); // Refrescamos la lista
+            alert('¡Usuario creado con éxito!');
+        } catch (error) {
+            console.error("Error al crear el usuario:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    const updateUser = async (userId, userData) => {
+        try {
+            // Usamos PATCH para permitir actualizaciones parciales (ej: no cambiar la contraseña)
+            await api.patch(`/user/register/${userId}/`, userData);
+            await fetchUsers(); // Refrescamos la lista
+            alert('¡Usuario actualizado con éxito!');
+        } catch (error) {
+            console.error("Error al actualizar el usuario:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
+
+    const deleteUser = async (userId) => {
+        try {
+            await api.delete(`/user/register/${userId}/`);
+            await fetchUsers(); // Refrescamos la lista
+            alert('Usuario eliminado con éxito.');
+        } catch (error) {
+            console.error("Error al eliminar el usuario:", error.response?.data);
+            alert("Error: " + JSON.stringify(error.response?.data));
+            throw error;
+        }
+    };
 
     // El valor que se proveerá a toda la aplicación
     const value = {
@@ -142,7 +243,14 @@ export const DataProvider = ({ children }) => {
         updateProduct,
         deleteProduct,
         addMovement,
-        // Aquí podrías añadir 'adjustStock' si la implementas
+        addBranch, 
+        updateBranch, 
+        deleteBranch,
+        addBranchStock, 
+        adjustStock,
+        addUserByAdmin, 
+        updateUser, 
+        deleteUser,
     };
 
     return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

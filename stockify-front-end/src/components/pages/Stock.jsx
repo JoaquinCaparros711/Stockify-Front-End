@@ -1,89 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Button, Card, Table, Badge, Form, Modal, Alert } from 'react-bootstrap';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Container, Button, Card, Table, Badge, Form, Modal, Alert, Spinner } from 'react-bootstrap';
 import { BsPencilSquare, BsPlus } from 'react-icons/bs';
+import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import './Stock.css'; 
 
-const mockBranchStockData = [
-    { id: 1, productId: 1, productName: 'Mate Imperial Calabaza', category: 'Mate', branchId: 1, branchName: 'Depósito Central', current_stock: 30 },
-    { id: 2, productName: 'Mate camionero Algarrobo', category: 'Mate', branchId: 1, branchName: 'Depósito Central', current_stock: 8 },
-    { id: 3, productName: 'Lata MATERO', category: 'Lata', branchId: 1, branchName: 'Depósito Central', current_stock: 15 },
-    { id: 4, productName: 'Matera 100% cuero', category: 'Matera', branchId: 2, branchName: 'Sucursal Córdoba', current_stock: 5 },
-];
-const allProducts = [{id: 1, name: 'Mate Imperial Calabaza'}, {id: 2, name: 'Mate camionero Algarrobo'}, {id: 3, name: 'Matera 100% cuero'}, {id: 4, name: 'Lata MATERO'}];
-const allBranches = [{id: 1, name: 'Depósito Central'}, {id: 2, name: 'Sucursal Córdoba'}, {id: 3, name: 'Sucursal Mendoza'}];
 
 const Stock = () => {
-    // --- ESTADOS DEL COMPONENTE ---
-    const [branchStock, setBranchStock] = useState(mockBranchStockData); // Estado para la lista principal
-    const [selectedBranch, setSelectedBranch] = useState('Depósito Central');
+    // 1. OBTENEMOS DATOS Y FUNCIONES DE LOS CONTEXTOS
+    const { branchStock, products, branches, loading, addBranchStock, adjustStock } = useData();
+    const { user } = useAuth();
+    
+    // Estados locales para el filtro y los modales
+    const [selectedBranch, setSelectedBranch] = useState('');
     const [showAdjustModal, setShowAdjustModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingStock, setEditingStock] = useState(null);
-    const [formData, setFormData] = useState({}); // Estado para los datos del formulario
+    const [formData, setFormData] = useState({});
 
-    // Efecto para cargar los datos en el formulario cuando se edita un stock
+    // Efecto para inicializar el selector de sucursal
+    useEffect(() => {
+        if (branches.length > 0) {
+            // Si es admin, selecciona la primera. Si es empleado, la suya.
+            const initialBranch = user.role === 'admin' ? branches[0].name : user.branch;
+            setSelectedBranch(initialBranch);
+        }
+    }, [branches, user]);
+
+    // Efecto para cargar los datos en el formulario
     useEffect(() => {
         if (editingStock) {
-            setFormData({ newStock: editingStock.current_stock, reason: '' });
+            setFormData({ current_stock: editingStock.current_stock, reason: '' });
         } else {
-            // Resetea el formulario para añadir un nuevo producto
-            setFormData({ productId: '', branchId: selectedBranch, quantity: '' });
+            setFormData({ product: '', branch: branches.find(b => b.name === selectedBranch)?.id || '', current_stock: '' });
         }
-    }, [editingStock, selectedBranch]);
+    }, [editingStock, showAddModal, showAdjustModal, selectedBranch, branches]);
 
-
-    // --- LÓGICA PARA MANEJAR LOS MODALES Y FORMULARIOS ---
+    // --- LÓGICA PARA MANEJAR MODALES Y FORMULARIOS ---
     const handleSelectBranch = (e) => setSelectedBranch(e.target.value);
-
-    const handleShowAdjustModal = (stockItem) => {
-        setEditingStock(stockItem);
-        setShowAdjustModal(true);
-    };
+    const handleShowAdjustModal = (stockItem) => { setEditingStock(stockItem); setShowAdjustModal(true); };
     const handleCloseAdjustModal = () => setShowAdjustModal(false);
-
-    const handleShowAddModal = () => {
-        setEditingStock(null); // Nos aseguramos de que no estamos en modo edición
-        setShowAddModal(true);
-    };
+    const handleShowAddModal = () => { setEditingStock(null); setShowAddModal(true); };
     const handleCloseAddModal = () => setShowAddModal(false);
+    const handleFormChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-    const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    const handleAdjustStockSubmit = async () => {
+        if (!formData.current_stock || formData.current_stock < 0) {
+            alert("Por favor, ingresa una cantidad de stock válida.");
+            return;
+        }
+        try {
+            await adjustStock(editingStock.id, { current_stock: formData.current_stock });
+            handleCloseAdjustModal();
+        } catch (error) { console.log("El ajuste de stock falló."); }
     };
 
-    const handleAdjustStock = () => {
-        console.log(`Ajustando stock para ${editingStock.productName} a ${formData.newStock} por motivo: ${formData.reason}`);
-        // Lógica para actualizar el estado
-        setBranchStock(branchStock.map(item => 
-            item.id === editingStock.id 
-            ? { ...item, current_stock: parseInt(formData.newStock) } 
-            : item
-        ));
-        handleCloseAdjustModal();
+    const handleAddProductSubmit = async () => {
+        if (!formData.product || !formData.branch || !formData.current_stock) {
+            alert("Por favor, complete todos los campos.");
+            return;
+        }
+        try {
+            await addBranchStock(formData);
+            handleCloseAddModal();
+        } catch (error) { console.log("El ingreso de stock falló."); }
     };
 
-    const handleAddProduct = () => {
-        console.log("Ingresando nuevo producto al stock:", formData);
-        const product = allProducts.find(p => p.id === parseInt(formData.productId));
-        const branch = allBranches.find(b => b.id === parseInt(formData.branchId));
-        
-        const newStockEntry = {
-            id: Date.now(),
-            productId: product.id,
-            productName: product.name,
-            category: 'Nueva Cat.', // Esto vendría del producto real
-            branchId: branch.id,
-            branchName: branch.name,
-            current_stock: parseInt(formData.quantity)
-        };
-        
-        setBranchStock(prevStock => [newStockEntry, ...prevStock]);
-        handleCloseAddModal();
-    };
+    // Usamos useMemo para "enriquecer" y filtrar el stock
+    const filteredStock = useMemo(() => {
+        if (loading || !branchStock.length) return [];
+        return branchStock
+            .map(item => ({
+                ...item,
+                productName: products.find(p => p.id === item.product)?.name || 'N/A',
+                category: products.find(p => p.id === item.product)?.category || 'N/A',
+                branchName: branches.find(b => b.id === item.branch)?.name || 'N/A',
+            }))
+            .filter(item => item.branchName === selectedBranch);
+    }, [branchStock, products, branches, selectedBranch, loading]);
 
-
-    const filteredStock = branchStock.filter(item => item.branchName === selectedBranch);
+    if (loading) {
+        return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
+    }
 
     return (
         <Container fluid className="stock-container">
@@ -92,18 +90,20 @@ const Stock = () => {
                     <h1 className="page-title">Gestión de Stock</h1>
                     <p className="page-subtitle">Visualiza y ajusta el inventario de cada sucursal.</p>
                 </div>
-                <Button className="btn-add-stock shadow-sm" onClick={handleShowAddModal}>
-                    <BsPlus size={22} className="me-2" />
-                    Ingresar Producto
-                </Button>
+                {user && user.role === 'admin' && (
+                    <Button className="btn-add-stock shadow-sm" onClick={handleShowAddModal}>
+                        <BsPlus size={22} className="me-2" />
+                        Ingresar Producto
+                    </Button>
+                )}
             </header>
 
             <Card className="shadow-sm stock-table-card">
                 <div className="stock-toolbar d-flex flex-wrap justify-content-between align-items-center">
                     <h5 className="mb-0">Inventario de: <strong>{selectedBranch}</strong></h5>
                     <Form.Group controlId="branchSelect" className="mt-2 mt-md-0">
-                        <Form.Select value={selectedBranch} onChange={handleSelectBranch}>
-                            {allBranches.map(branch => <option key={branch.id} value={branch.name}>{branch.name}</option>)}
+                        <Form.Select value={selectedBranch} onChange={handleSelectBranch} disabled={user.role !== 'admin'}>
+                            {branches.map(branch => <option key={branch.id} value={branch.name}>{branch.name}</option>)}
                         </Form.Select>
                     </Form.Group>
                 </div>
@@ -114,7 +114,7 @@ const Stock = () => {
                             <th>Producto</th>
                             <th>Categoría</th>
                             <th className="text-center">Stock Actual</th>
-                            <th className="text-end">Acciones</th>
+                            {user && user.role === 'admin' && <th className="text-end">Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -125,13 +125,15 @@ const Stock = () => {
                                 <td data-label="Stock Actual" className="text-center">
                                     <Badge bg={item.current_stock > 10 ? 'primary-light' : 'warning-light'} text={item.current_stock > 10 ? 'primary' : 'warning'} pill className="p-2 fs-6">{item.current_stock}</Badge>
                                 </td>
-                                <td data-label="Acciones" className="text-end">
-                                    <Button variant="light" className="btn-adjust border" size="sm" onClick={() => handleShowAdjustModal(item)}>
-                                        <BsPencilSquare className="me-1" /> Ajustar
-                                    </Button>
-                                </td>
+                                {user && user.role === 'admin' && (
+                                    <td data-label="Acciones" className="text-end">
+                                        <Button variant="light" className="btn-adjust border" size="sm" onClick={() => handleShowAdjustModal(item)}>
+                                            <BsPencilSquare className="me-1" /> Ajustar
+                                        </Button>
+                                    </td>
+                                )}
                             </tr>
-                        )) : ( <tr><td colSpan="4" className="text-center text-muted py-5">No hay productos en esta sucursal.</td></tr> )}
+                        )) : ( <tr><td colSpan={user && user.role === 'admin' ? 4 : 3} className="text-center text-muted py-5">No hay productos en esta sucursal.</td></tr> )}
                     </tbody>
                 </Table>
             </Card>
@@ -148,17 +150,13 @@ const Stock = () => {
                         <Form>
                             <Form.Group className="mb-3">
                                 <Form.Label>Nueva Cantidad de Stock</Form.Label>
-                                <Form.Control type="number" name="newStock" defaultValue={editingStock.current_stock} onChange={handleFormChange} autoFocus />
-                            </Form.Group>
-                             <Form.Group className="mb-3">
-                                <Form.Label>Motivo del Ajuste (Opcional)</Form.Label>
-                                <Form.Control as="textarea" rows={3} name="reason" onChange={handleFormChange} placeholder="Ej: Conteo de inventario, producto dañado..." />
+                                <Form.Control type="number" name="current_stock" defaultValue={editingStock.current_stock} onChange={handleFormChange} autoFocus />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={handleCloseAdjustModal}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleAdjustStock}>Guardar Ajuste</Button>
+                        <Button variant="primary" onClick={handleAdjustStockSubmit}>Guardar Ajuste</Button>
                     </Modal.Footer>
                 </Modal>
             )}
@@ -170,27 +168,26 @@ const Stock = () => {
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Producto</Form.Label>
-                            <Form.Select name="productId" onChange={handleFormChange}>
+                            <Form.Select name="product" onChange={handleFormChange}>
                                 <option>Selecciona un producto...</option>
-                                {allProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Sucursal de Destino</Form.Label>
-                            <Form.Select name="branchId" onChange={handleFormChange}>
-                                <option>Selecciona sucursal...</option>
-                                {allBranches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                            <Form.Select name="branch" defaultValue={branches.find(b => b.name === selectedBranch)?.id} onChange={handleFormChange} disabled={user.role !== 'admin'}>
+                                {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                             </Form.Select>
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Cantidad a Ingresar</Form.Label>
-                            <Form.Control type="number" name="quantity" onChange={handleFormChange} placeholder="Ej: 50" />
+                            <Form.Control type="number" name="current_stock" onChange={handleFormChange} placeholder="Ej: 50" />
                         </Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleCloseAddModal}>Cancelar</Button>
-                    <Button variant="primary" onClick={handleAddProduct}>Confirmar Ingreso</Button>
+                    <Button variant="primary" onClick={handleAddProductSubmit}>Confirmar Ingreso</Button>
                 </Modal.Footer>
             </Modal>
         </Container>
