@@ -38,7 +38,7 @@ const Movements = () => {
             return;
         }
         try {
-            await addMovement({ ...newMovementData, user: user.user_id });
+            await addMovement({ ...newMovementData, user: user.id });
             handleCloseModal();
         } catch (error) {
             console.log("El formulario no se cerrará debido a un error de la API.");
@@ -48,35 +48,40 @@ const Movements = () => {
     // 2. "ENRIQUECEMOS" LOS DATOS DE MOVIMIENTOS ANTES DE MOSTRARLOS
     // Usamos useMemo para optimizar y que este cálculo no se rehaga innecesariamente.
     const displayMovements = useMemo(() => {
+        // Si la API ya nos da los nombres, el "enriquecimiento" es mucho más sencillo.
+        // Solo necesitamos parsear la fecha.
         if (loading || !Array.isArray(movements)) return [];
-        
+
         return movements.map(mov => {
-            const product = products.find(p => p.id === mov.product);
-            const branch = branches.find(b => b.id === mov.branch);
-            const movementUser = users.find(u => u.id === mov.user);
-            
             // Corrección de la fecha
             let validDate = null;
             if (mov.date) {
-                const parsed = new Date(mov.date.replace(' ', 'T'));
-                if (!isNaN(parsed.getTime())) {
-                    validDate = parsed;
+                try {
+                    const isoString = mov.date.replace(' ', 'T').split('.')[0];
+                    const parsed = new Date(isoString);
+                    if (!isNaN(parsed.getTime())) {
+                        validDate = parsed;
+                    }
+                } catch (e) {
+                    console.error("Fecha inválida al parsear:", mov.date);
                 }
             }
 
             return {
                 ...mov,
-                productName: product ? product.name : 'N/A',
-                branchName: branch ? branch.name : 'N/A',
-                userName: movementUser ? movementUser.username : 'N/A',
+                // Los nombres ya vienen en el objeto 'mov' desde la API
+                productName: mov.product_name || 'N/A',
+                branchName: mov.branch_name || 'N/A',
+                userName: mov.user_name || 'N/A',
                 parsedDate: validDate
             };
         });
-    }, [movements, products, branches, users, loading]);
+        // Ya no dependemos de products, branches, o users para el cálculo
+    }, [movements, loading]);
 
     // La lógica de filtrado ahora opera sobre los datos enriquecidos
     const filteredMovements = displayMovements.filter(mov => filter === 'all' || mov.movement_type === filter);
-
+    console.log("Movimientos filtrados:", filteredMovements);
     if (loading) {
         return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
     }
