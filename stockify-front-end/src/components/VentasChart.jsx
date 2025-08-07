@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -19,67 +19,62 @@ ChartJS.register(
   Legend
 );
 
-// El componente ahora recibe los movimientos y productos como props
 const VentasChart = ({ movements = [], products = [] }) => {
 
-    // --- LÓGICA PARA PROCESAR LOS DATOS ---
+    const chartData = useMemo(() => {
+        // Optimización: Crear un mapa de precios para búsqueda instantánea.
+        const productPriceMap = new Map(products.map(p => [p.id, parseFloat(p.price) || 0]));
 
-    // 1. Creamos las etiquetas para los últimos 7 días
-    const labels = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        // Formato simple como "Dom", "Lun", "Mar", etc.
-        labels.push(d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''));
-    }
+        // Crear un mapa para almacenar las ventas de los últimos 7 días.
+        const salesByDate = new Map();
+        const labels = [];
 
-    // 2. Inicializamos los datos de ventas para cada día en cero
-    const salesData = Array(7).fill(0);
-    const today = new Date();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 7);
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateKey = d.toISOString().split('T')[0];
+            salesByDate.set(dateKey, 0);
+            labels.push(d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''));
+        }
 
-    // 3. Procesamos los movimientos
-    movements.forEach(mov => {
-        // Solo nos interesan las salidas ('outgoing')
-        if (mov.movement_type === 'outgoing') {
-            const movementDate = new Date(mov.date.replace(' ', 'T'));
+        // Procesar los movimientos de venta.
+        movements.forEach(mov => {
+            // --- LA CORRECCIÓN FINAL ---
+            // Cambiamos 'created_at' por 'date' para que coincida con tu API de Django.
+            const movementDateStr = mov.date; 
 
-            // Verificamos si el movimiento ocurrió en los últimos 7 días
-            if (movementDate >= sevenDaysAgo && movementDate <= today) {
-                // Encontramos el producto para obtener su precio
-                const product = products.find(p => p.id === mov.product);
-                if (product) {
-                    const saleValue = (parseFloat(product.price) || 0) * mov.quantity;
-                    
-                    // Calculamos a qué día corresponde (0=hoy, 1=ayer, etc.)
-                    const diffDays = Math.floor((today - movementDate) / (1000 * 60 * 60 * 24));
-                    const dayIndex = 6 - diffDays; // Lo mapeamos a nuestro array de labels
+            if (mov.movement_type === 'outgoing' && movementDateStr) {
+                const movementDateKey = new Date(movementDateStr).toISOString().split('T')[0];
 
-                    if (dayIndex >= 0 && dayIndex < 7) {
-                        salesData[dayIndex] += saleValue;
-                    }
+                if (salesByDate.has(movementDateKey)) {
+                    const price = productPriceMap.get(mov.product) || 0;
+                    const saleValue = price * mov.quantity;
+                    salesByDate.set(movementDateKey, salesByDate.get(movementDateKey) + saleValue);
                 }
             }
-        }
-    });
+        });
+        
+        return {
+            labels,
+            datasets: [
+                {
+                    label: 'Ventas ($)',
+                    data: Array.from(salesByDate.values()),
+                    backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    barPercentage: 0.6,
+                },
+            ],
+        };
 
-    // --- CONFIGURACIÓN DEL GRÁFICO ---
+    }, [movements, products]);
 
-    const data = {
-        labels,
-        datasets: [
-            {
-                label: 'Ventas ($)',
-                data: salesData, // Usamos los datos que calculamos
-                backgroundColor: 'rgba(52, 152, 219, 0.8)',
-                borderRadius: 5,
-            },
-        ],
-    };
-
+    // Configuración de las opciones del gráfico.
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 display: false,
@@ -87,19 +82,43 @@ const VentasChart = ({ movements = [], products = [] }) => {
             title: {
                 display: true,
                 text: 'Ventas de los últimos 7 días',
-                font: {
-                    size: 16
-                }
+                font: { size: 18, family: 'system-ui, sans-serif', weight: 'bold' },
+                padding: { top: 10, bottom: 20 }
             },
+            tooltip: {
+                backgroundColor: '#fff',
+                titleColor: '#333',
+                bodyColor: '#333',
+                borderColor: '#ddd',
+                borderWidth: 1,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) {
+                            label += new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(context.parsed.y);
+                        }
+                        return label;
+                    }
+                }
+            }
         },
         scales: {
             y: {
-                beginAtZero: true
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + new Intl.NumberFormat('es-AR').format(value);
+                    }
+                }
+            },
+            x: {
+                grid: { display: false }
             }
         }
     };
 
-    return <Bar options={options} data={data} />;
+    return <Bar options={options} data={chartData} />;
 }
 
 export default VentasChart;
