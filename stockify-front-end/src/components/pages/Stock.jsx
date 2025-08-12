@@ -20,10 +20,26 @@ const Stock = () => {
 
     // Efecto para inicializar el selector de sucursal
     useEffect(() => {
-        if (branches.length > 0) {
-            // Si es admin, selecciona la primera. Si es empleado, la suya.
-            const initialBranch = user.role === 'admin' ? branches[0].name : user.branch;
-            setSelectedBranch(initialBranch);
+        // Solo se ejecuta si ya tenemos las sucursales y el usuario cargado.
+        if (branches.length > 0 && user) {
+            let initialBranchName = '';
+
+            if (user.role === 'admin') {
+                // Para el admin, toma el nombre de la primera sucursal.
+                initialBranchName = branches[0].name;
+            } else if (user.role === 'employee') {
+                // Para el empleado:
+                // 1. Busca en el array 'branches' la sucursal cuyo 'id' coincida con el 'user.branch'.
+                const employeeBranch = branches.find(b => b.id == user.branch);
+                
+                // 2. Si la encuentra, obtiene su propiedad '.name'.
+                if (employeeBranch) {
+                    initialBranchName = employeeBranch.name;
+                }
+            }
+            
+            // 3. Guarda el NOMBRE correcto en el estado.
+            setSelectedBranch(initialBranchName);
         }
     }, [branches, user]);
 

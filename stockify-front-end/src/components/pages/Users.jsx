@@ -66,21 +66,43 @@ const Users = () => {
         }
     };
     
-    // --- 2. LÓGICA CLAVE PARA "ENRIQUECER" LOS DATOS DE USUARIOS ---
+    // --- ✅ LÓGICA CLAVE: Filtro para que el empleado vea a sus compañeros y a los admins ---
     const displayUsers = useMemo(() => {
-        // Solo procesamos si no está cargando y si ambos arrays necesarios tienen datos
-        if (loading || !users.length || !branches.length) {
+        if (loading || !users.length || !branches.length || !loggedInUser) {
             return [];
         }
         
-        return users.map(user => {
+        // 1. Enriquece a TODOS los usuarios con el nombre de su sucursal.
+        const enrichedUsers = users.map(user => {
             const branch = branches.find(b => b.id === user.branch);
             return {
                 ...user,
-                branchName: branch ? branch.name : 'N/A' // Creamos una nueva propiedad con el nombre
+                branchName: branch ? branch.name : 'N/A'
             };
         });
-    }, [users, branches, loading]); // Dependencias del useMemo
+
+        // 2. Filtra la lista según el rol del usuario logueado.
+        if (loggedInUser.role === 'admin') {
+            // El admin ve a todos.
+            return enrichedUsers;
+        }
+
+        if (loggedInUser.role === 'employee') {
+            const employeeBranch = loggedInUser.branch;
+            // El empleado ve a los admins Y a los compañeros de su sucursal.
+            return enrichedUsers.filter(user => {
+                // Condición 1: Si el usuario es un admin, lo muestra.
+                if (user.role === 'admin') return true;
+                // Condición 2: Si el usuario es un empleado Y de la misma sucursal, lo muestra.
+                if (user.role === 'employee' && user.branch === employeeBranch) return true;
+                // Si no cumple ninguna de las dos, lo oculta.
+                return false;
+            });
+        }
+        
+        return [];
+
+    }, [users, branches, loading, loggedInUser]);
 
     const isAdmin = loggedInUser && loggedInUser.role === 'admin';
 
@@ -116,7 +138,6 @@ const Users = () => {
                     </thead>
                     <tbody>
                         {displayUsers && displayUsers.length > 0 ? (
-                            // 3. LA TABLA AHORA USA LOS DATOS ENRIQUECIDOS
                             displayUsers.map((user) => (
                                 <tr key={user.id ?? `user-fallback-${user.username}-${user.email}`}>
                                     <td data-label="Usuario">
@@ -140,12 +161,13 @@ const Users = () => {
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan={isAdmin ? 4 : 3} className="text-center text-muted py-5">No hay usuarios para mostrar.</td></tr>
+                            <tr><td colSpan={isAdmin ? 5 : 4} className="text-center text-muted py-5">No hay usuarios para mostrar.</td></tr>
                         )}
                     </tbody>
                 </Table>
             </Card>
 
+            {/* El modal no necesita cambios */}
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton><Modal.Title>{editingUser ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}</Modal.Title></Modal.Header>
                 <Modal.Body>

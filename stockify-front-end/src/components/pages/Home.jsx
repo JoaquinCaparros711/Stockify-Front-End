@@ -17,26 +17,20 @@ const KpiCard = ({ title, value, icon, color }) => (
 );
 
 const Home = () => {
-    // 1. OBTENEMOS TODOS LOS DATOS Y FUNCIONES DE LOS CONTEXTOS
+    // OBTENEMOS DATOS... (sin cambios)
     const { products, branchStock, movements, branches, users, loading, addMovement } = useData();
     const { user } = useAuth();
     
+    // ESTADOS Y MANEJADORES DE MODAL... (sin cambios)
     const [showSaleModal, setShowSaleModal] = useState(false);
-    // El estado del formulario ahora guardará el ID de la sucursal
-    const [saleData, setSaleData] = useState({
-        product: '',
-        quantity: 1,
-        branch: '', 
-        description: ''
-    });
+    const [saleData, setSaleData] = useState({ product: '', quantity: 1, branch: '', description: '' });
 
-    // --- LÓGICA PARA MANEJAR EL MODAL ---
     const handleShowSaleModal = () => {
         let initialBranchId = '';
         if (user && user.role === 'employee') {
-            initialBranchId = user.branch; // El ID de la sucursal del empleado
+            initialBranchId = user.branch;
         } else if (branches && branches.length > 0) {
-            initialBranchId = branches[0].id; // La primera sucursal para el admin
+            initialBranchId = branches[0].id;
         }
         setSaleData({ product: '', quantity: 1, branch: initialBranchId, description: '' });
         setShowSaleModal(true);
@@ -45,7 +39,6 @@ const Home = () => {
 
     const handleSaleFormChange = (e) => {
         const { name, value } = e.target;
-        // Si cambia la sucursal, reseteamos el producto seleccionado
         if (name === 'branch') {
             setSaleData({ ...saleData, branch: value, product: '' });
         } else {
@@ -76,49 +69,43 @@ const Home = () => {
         }
     };
 
-    // --- CÁLCULOS DINÁMICOS PARA EL DASHBOARD (usando useMemo para optimizar) ---
     const dashboardData = useMemo(() => {
-        if (loading || !products.length || !branchStock.length || !movements.length || !users.length) {
+        if (loading || !products.length || !branchStock.length || !movements.length || !users.length || !user) {
             return { totalProducts: 0, lowStockCount: 0, monthlySales: 0, totalUsersInScope: 0, lowStockProducts: [] };
         }
 
-        // --- CÁLCULO DE PRODUCTOS CON BAJO STOCK (sin cambios) ---
+        // --- CÁLCULOS DE STOCK Y VENTAS (sin cambios) ---
         const lowStockItems = branchStock.filter(p => p.current_stock <= 10)
             .map(stockItem => {
                 const productDetails = products.find(p => p.id === stockItem.product);
                 return { ...stockItem, productName: productDetails?.name || 'N/A' };
             });
-
-        // --- CÁLCULO DE VENTAS DEL MES (CON LA CORRECCIÓN) ---
         
-        // 1. Obtenemos el mes y año actual fuera del bucle para eficiencia.
         const now = new Date();
-        const currentMonth = now.getMonth(); // 0 = Enero, 7 = Agosto, etc.
+        const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
 
         const salesValue = movements
             .filter(m => {
-                // 2. Creamos un objeto Date para cada movimiento para poder compararlo.
                 const movementDate = new Date(m.date);
-                
-                // 3. Devolvemos true solo si el movimiento es una venta Y es del mes y año actual.
                 return m.movement_type === 'outgoing' &&
                     movementDate.getMonth() === currentMonth &&
                     movementDate.getFullYear() === currentYear;
             })
             .reduce((sum, mov) => {
                 const product = products.find(p => p.id === mov.product);
-                // Si el producto no se encuentra o no tiene precio, no suma nada.
                 if (!product || !product.price) return sum; 
                 return sum + (parseFloat(product.price) * mov.quantity);
             }, 0);
 
-        // --- LÓGICA PARA CONTAR USUARIOS (sin cambios) ---
+        // --- 💡 LÓGICA CORREGIDA PARA CONTAR USUARIOS ---
         let totalUsersInScope = 0;
         if (user.role === 'admin') {
             totalUsersInScope = users.length;
         } else if (user.role === 'employee') {
-            totalUsersInScope = users.filter(u => u.branch === user.branch).length;
+            // Filtra por usuarios que son admin O que están en la misma sucursal.
+            const usersInScope = users.filter(u => u.role === 'admin' || u.branch === user.branch);
+            totalUsersInScope = usersInScope.length;
         }
 
         return {
@@ -130,16 +117,13 @@ const Home = () => {
         };
     }, [products, branchStock, movements, users, loading, user]);
 
-    // --- LÓGICA PARA FILTRAR PRODUCTOS DISPONIBLES EN EL MODAL DE VENTA ---
+    // RESTO DEL COMPONENTE... (sin cambios)
     const availableProductsForSale = useMemo(() => {
         if (!saleData.branch) return [];
-        // 1. Encontrar el stock de la sucursal seleccionada
         const stockInSelectedBranch = branchStock.filter(
             item => item.branch === parseInt(saleData.branch) && item.current_stock > 0
         );
-        // 2. Obtener los IDs de esos productos en stock
         const availableProductIds = stockInSelectedBranch.map(item => item.product);
-        // 3. Filtrar la lista de productos completa para obtener los detalles
         return products.filter(p => availableProductIds.includes(p.id));
     }, [saleData.branch, branchStock, products]);
 
@@ -166,10 +150,11 @@ const Home = () => {
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Total de Productos" value={dashboardData.totalProducts} icon={<BsBoxSeam size={32} />} color="primary" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Ventas del Mes" value={formatCurrency(dashboardData.monthlySales)} icon={<BsCashCoin size={32} />} color="success" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos con Bajo Stock" value={dashboardData.lowStockCount} icon={<BsArrowDownCircle size={32} />} color="warning" /></Col>
-                {/* La tarjeta de usuarios ahora es dinámica */}
-                <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Usuarios en tu Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
+                {/* Sugerencia: podrías cambiar el título dinámicamente si eliges la Opción 2 */}
+                <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Equipo de la Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
             </Row>
 
+            {/* ... Resto del JSX sin cambios ... */}
             <Row>
                 <Col xl={8} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
