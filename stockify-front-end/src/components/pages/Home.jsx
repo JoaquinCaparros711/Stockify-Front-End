@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Spinner } from 'react-bootstrap';
 import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsXCircleFill, BsCheckCircleFill } from 'react-icons/bs';
+// --- CAMBIO 1: Importamos AMBOS gráficos ---
 import VentasChart from '../../components/VentasChart';
+import MovimientosChart from '../../components/MovementChart';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import './Home.css';
 
+// ... (El resto de tus componentes y lógica no necesitan cambios)
 const KpiCard = ({ title, value, icon, color }) => (
     <div className="kpi-card shadow-sm">
         <div className={`kpi-icon-wrapper text-${color}`}>{icon}</div>
@@ -134,15 +137,14 @@ const Home = () => {
             return { totalProducts: 0, lowStockCount: 0, monthlySales: 0, totalUsersInScope: 0, lowStockProducts: [] };
         }
         
-        // --- CAMBIO 1: Añadimos el nombre de la sucursal a los productos con bajo stock ---
         const lowStockItems = branchStock.filter(p => p.current_stock <= 10)
             .map(stockItem => {
                 const productDetails = products.find(p => p.id === stockItem.product);
-                const branchDetails = branches.find(b => b.id === stockItem.branch); // Buscamos la sucursal
+                const branchDetails = branches.find(b => b.id === stockItem.branch);
                 return { 
                     ...stockItem, 
                     productName: productDetails?.name || 'N/A',
-                    branchName: branchDetails?.name || 'N/A' // Añadimos el nombre de la sucursal
+                    branchName: branchDetails?.name || 'N/A'
                 };
             });
             
@@ -175,7 +177,7 @@ const Home = () => {
             totalUsersInScope: totalUsersInScope,
             lowStockProducts: lowStockItems
         };
-    }, [products, branchStock, movements, users, branches, loading, user]); // Se añade 'branches' a las dependencias
+    }, [products, branchStock, movements, users, branches, loading, user]);
 
     const availableProductsForSale = useMemo(() => {
         if (!saleData.branch) return [];
@@ -217,11 +219,23 @@ const Home = () => {
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos con Bajo Stock" value={dashboardData.lowStockCount} icon={<BsArrowDownCircle size={32} />} color="warning" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Equipo de la Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
             </Row>
-
+            
+            {/* --- CAMBIO 2: Mostramos ambos gráficos uno debajo del otro --- */}
+            <Row>
+                <Col xl={12} className="mb-4">
+                    <Card className="shadow-sm h-100 chart-card">
+                        <Card.Body className="p-4">
+                            <MovimientosChart movements={movements} products={products}/>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
             <Row>
                 <Col xl={8} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
-                        <Card.Body className="p-4"><VentasChart movements={movements} products={products} /></Card.Body>
+                        <Card.Body className="p-4">
+                            <VentasChart movements={movements} products={products} />
+                        </Card.Body>
                     </Card>
                 </Col>
                 <Col xl={4} className="mb-4">
@@ -235,7 +249,6 @@ const Home = () => {
                                 <tbody>
                                     {dashboardData.lowStockProducts.map(product => (
                                         <tr key={`${product.id}-${product.branch}`}>
-                                            {/* --- CAMBIO 2: Mostramos el nombre del producto y debajo la sucursal --- */}
                                             <td>
                                                 <div>{product.productName}</div>
                                                 <small className="text-muted">{product.branchName}</small>
