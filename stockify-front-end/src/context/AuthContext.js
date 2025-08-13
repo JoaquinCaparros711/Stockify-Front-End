@@ -135,17 +135,13 @@ export const AuthProvider = ({ children }) => {
 
     const updateProfile = async (userId, profileData) => {
         try {
-            // Usamos PATCH para enviar solo los datos que cambiaron
-            const response = await api.patch(`/user/profile/${userId}/`, profileData); // Asumiendo un endpoint /user/profile/
+            const response = await api.patch(`/user/register/${userId}/`, profileData); // URL CORRECTA
             
-            // Actualizamos el usuario en el estado local con la respuesta de la API
             const updatedUser = response.data;
-            setUser(updatedUser); // Actualiza el estado del usuario en toda la app
+            setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
-
         } catch (error) {
             console.error("Error al actualizar el perfil:", error.response?.data);
-            // Lanzamos el error para que el componente lo muestre en la alerta
             throw error;
         }
     };
