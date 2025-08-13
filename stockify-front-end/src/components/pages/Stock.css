@@ -84,3 +84,86 @@
 .stock-table .btn-adjust {
     border-radius: 0.5rem;
 }
+
+/* --- ESTILOS PARA LA ALERTA DE ERROR ESTILO APPLE --- */
+@keyframes slideDownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.apple-style-alert {
+    background-color: #ff3b3020;
+    color: #ff3b30;
+    border: 1px solid #ff3b3050;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    animation: slideDownFadeIn 0.3s ease-out;
+}
+
+.apple-style-alert .alert-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+.apple-style-alert .close-alert-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 1.5rem;
+    margin-left: auto;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.apple-style-alert .close-alert-btn:hover {
+    opacity: 1;
+}
+
+/* --- ESTILOS PARA EL TOAST DE ÉXITO ESTILO APPLE --- */
+@keyframes fadeInToast {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.apple-style-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    z-index: 2000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: fadeInToast 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.apple-style-toast.success {
+    background-color: #34c759;
+    color: white;
+}
+
+.apple-style-toast .toast-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}

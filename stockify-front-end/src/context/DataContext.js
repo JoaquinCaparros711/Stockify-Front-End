@@ -30,7 +30,6 @@ export const DataProvider = ({ children }) => {
         try {
             const response = await api.post('/control/model/product/', productData);
             await fetchProducts(); // Volvemos a pedir los datos para tener la lista actualizada
-            alert('¡Producto creado con éxito!');
         } catch (error) {
             console.error("Error al crear el producto:", error.response?.data);
             alert("Error al crear producto: " + JSON.stringify(error.response?.data));
@@ -42,7 +41,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.put(`/control/model/product/${productId}/`, productData);
             await fetchProducts();
-            alert('¡Producto actualizado con éxito!');
         } catch (error) {
             console.error("Error al actualizar el producto:", error.response?.data);
             alert("Error al actualizar producto: " + JSON.stringify(error.response?.data));
@@ -54,7 +52,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.delete(`/control/model/product/${productId}/`);
             await fetchProducts();
-            alert('Producto eliminado con éxito.');
         } catch (error) {
             console.error("Error al eliminar el producto:", error.response?.data);
             alert("Error al eliminar producto: " + JSON.stringify(error.response?.data));
@@ -74,7 +71,6 @@ export const DataProvider = ({ children }) => {
             await api.post('/control/model/stock_movement/', movementData);
             // Después de un movimiento, el stock y la lista de movimientos cambian
             await Promise.all([fetchMovements(), fetchBranchStock()]);
-            alert('Movimiento registrado con éxito.');
         } catch (error) {
             console.error("Error al registrar movimiento:", error.response?.data);
             alert("Error al registrar movimiento: " + JSON.stringify(error.response?.data));
@@ -95,7 +91,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.post('/control/model/branch/', branchData);
             await fetchBranches(); // Refrescamos la lista para mostrar la nueva sucursal
-            alert('¡Sucursal creada con éxito!');
         } catch (error) {
             console.error("Error al crear la sucursal:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
@@ -107,7 +102,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.put(`/control/model/branch/${branchId}/`, branchData);
             await fetchBranches(); // Refrescamos la lista
-            alert('¡Sucursal actualizada con éxito!');
         } catch (error) {
             console.error("Error al actualizar la sucursal:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
@@ -119,7 +113,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.delete(`/control/model/branch/${branchId}/`);
             await fetchBranches(); // Refrescamos la lista
-            alert('Sucursal eliminada con éxito.');
         } catch (error) {
             console.error("Error al eliminar la sucursal:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
@@ -147,7 +140,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.post('/control/model/branch_stock/', stockData);
             await fetchBranchStock(); // Refrescamos la lista de stock
-            alert('Producto ingresado al stock con éxito.');
         } catch (error) {
             console.error("Error al ingresar producto al stock:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
@@ -160,9 +152,7 @@ export const DataProvider = ({ children }) => {
             // Usamos PATCH para actualizar solo los campos que enviamos (current_stock)
             await api.patch(`/control/model/branch_stock/${stockId}/`, stockData);
             await fetchBranchStock(); // Refrescamos la lista de stock
-            // También refrescamos los movimientos para registrar el ajuste si lo implementas
             await fetchMovements(); 
-            alert('Stock ajustado con éxito.');
         } catch (error) {
             console.error("Error al ajustar el stock:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
@@ -198,7 +188,6 @@ export const DataProvider = ({ children }) => {
             // Usamos el endpoint específico que creaste para esta acción
             await api.post('/user/admin/create-user/', userData);
             await fetchUsers(); // Refrescamos la lista
-            alert('¡Usuario creado con éxito!');
         } catch (error) {
             console.error("Error al crear el usuario:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
@@ -207,14 +196,12 @@ export const DataProvider = ({ children }) => {
     };
 
     const updateUser = async (userId, userData) => {
+        // Ya no necesitas eliminar 'company' aquí, el backend lo ignora.
         try {
-            // Usamos PATCH para permitir actualizaciones parciales (ej: no cambiar la contraseña)
             await api.patch(`/user/register/${userId}/`, userData);
-            await fetchUsers(); // Refrescamos la lista
-            alert('¡Usuario actualizado con éxito!');
+            await fetchUsers();
         } catch (error) {
             console.error("Error al actualizar el usuario:", error.response?.data);
-            alert("Error: " + JSON.stringify(error.response?.data));
             throw error;
         }
     };
@@ -223,7 +210,6 @@ export const DataProvider = ({ children }) => {
         try {
             await api.delete(`/user/register/${userId}/`);
             await fetchUsers(); // Refrescamos la lista
-            alert('Usuario eliminado con éxito.');
         } catch (error) {
             console.error("Error al eliminar el usuario:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));

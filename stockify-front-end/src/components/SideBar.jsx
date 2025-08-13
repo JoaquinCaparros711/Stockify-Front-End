@@ -5,7 +5,7 @@ import { NavLink } from "react-router-dom"
 import { sidebarItems, logoutItem } from "../data/sidebarData.js"
 import { useAuth } from "../context/AuthContext"
 import { Dropdown, Modal, Button, Form, Row, Col } from "react-bootstrap"
-import { BsList, BsPersonCircle, BsExclamationTriangleFill, BsPencilFill } from "react-icons/bs"
+import { BsList, BsExclamationTriangleFill, BsPencilFill } from "react-icons/bs"
 import "./SideBar.css"
 
 const SideBar = () => {
@@ -33,13 +33,12 @@ const SideBar = () => {
     }
   }, [user, showProfileModal])
 
-  // Función para obtener el nombre a mostrar
   const getDisplayName = () => {
     if (!user) return "Usuario"
-
-    // Prioridad: name > username > email > 'Usuario'
     return user.name || user.username || user.email || "Usuario"
   }
+  
+  const displayName = getDisplayName();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen)
@@ -70,24 +69,24 @@ const SideBar = () => {
 
   return (
     <>
-      <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
+      <button className="sidebar-toggle-btn-apple" onClick={toggleSidebar}>
         <BsList />
       </button>
 
-      <div className={`sidebar ${isOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-logo">Stockify</div>
+      <div className={`sidebar-apple ${isOpen ? "open" : ""}`}>
+        <div className="sidebar-header-apple">
+          <div className="sidebar-logo-apple">Stockify</div>
         </div>
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav-apple">
           <ul>
             {sidebarItems.map((item, index) => (
               <li key={index} onClick={() => isOpen && setIsOpen(false)}>
                 {item.type === "heading" ? (
-                  <span className="nav-heading">{item.text}</span>
+                  <span className="nav-heading-apple">{item.text}</span>
                 ) : (
-                  <NavLink to={item.path} className="nav-link">
-                    <span className="nav-icon">{item.icon}</span>
-                    <span className="nav-text">{item.text}</span>
+                  <NavLink to={item.path} className="nav-link-apple">
+                    <span className="nav-icon-apple">{item.icon}</span>
+                    <span className="nav-text-apple">{item.text}</span>
                   </NavLink>
                 )}
               </li>
@@ -95,22 +94,27 @@ const SideBar = () => {
           </ul>
         </nav>
 
-        <div className="sidebar-footer">
+        <div className="sidebar-footer-apple">
           <Dropdown drop="up" className="w-100">
-            <Dropdown.Toggle as="div" className="user-info-toggle">
-              <div className="user-info">
-                <BsPersonCircle className="user-icon" />
-                <span className="user-name">{getDisplayName()}</span>
+            <Dropdown.Toggle as="div" className="user-profile-toggle">
+              <div className="user-info-apple">
+                {/* Cambio visual: Avatar dinámico en lugar de ícono */}
+                <img 
+                  src={`https://ui-avatars.com/api/?name=${displayName.replace(' ', '+')}&background=random&color=fff`} 
+                  alt="Avatar" 
+                  className="user-avatar-apple"
+                />
+                <span className="user-name-apple">{displayName}</span>
               </div>
             </Dropdown.Toggle>
 
-            <Dropdown.Menu className="w-100 dropdown-menu-dark">
+            <Dropdown.Menu className="dropdown-menu-apple">
               <Dropdown.Item onClick={handleShowProfileModal}>
                 <BsPencilFill className="me-2" /> Editar Perfil
               </Dropdown.Item>
               <Dropdown.Divider />
-              <Dropdown.Item onClick={handleShowLogoutConfirm} className="text-danger">
-                {logoutItem.icon && <span className="nav-icon me-2">{logoutItem.icon}</span>}
+              <Dropdown.Item onClick={handleShowLogoutConfirm} className="dropdown-item-danger">
+                {logoutItem.icon && <span className="me-2">{logoutItem.icon}</span>}
                 {logoutItem.text}
               </Dropdown.Item>
             </Dropdown.Menu>
@@ -118,31 +122,31 @@ const SideBar = () => {
         </div>
       </div>
 
-      {isOpen && <div className="sidebar-backdrop" onClick={toggleSidebar}></div>}
+      {isOpen && <div className="sidebar-backdrop-apple" onClick={toggleSidebar}></div>}
 
-      <Modal show={showLogoutConfirm} onHide={handleCloseLogoutConfirm} centered>
+      <Modal show={showLogoutConfirm} onHide={handleCloseLogoutConfirm} centered dialogClassName="apple-modal-dark">
         <Modal.Header closeButton>
-          <Modal.Title>
+          <Modal.Title className="modal-title-apple">
             <BsExclamationTriangleFill className="text-warning me-2" />
             Confirmar Cierre de Sesión
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          ¿Estás seguro, <strong>{getDisplayName()}</strong>, que deseas cerrar sesión?
+          ¿Estás seguro, <strong>{displayName}</strong>, que deseas cerrar sesión?
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseLogoutConfirm}>
+          <Button variant="secondary" className="apple-button-secondary" onClick={handleCloseLogoutConfirm}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={handleConfirmLogout}>
+          <Button variant="danger" className="apple-button-danger" onClick={handleConfirmLogout}>
             Cerrar Sesión
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Modal show={showProfileModal} onHide={handleCloseProfileModal} centered>
+      <Modal show={showProfileModal} onHide={handleCloseProfileModal} centered dialogClassName="apple-modal-dark">
         <Modal.Header closeButton>
-          <Modal.Title>Editar Perfil</Modal.Title>
+          <Modal.Title className="modal-title-apple">Editar Perfil</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -154,7 +158,7 @@ const SideBar = () => {
               <Form.Label>Email</Form.Label>
               <Form.Control type="email" name="email" value={profileData.email} onChange={handleProfileFormChange} />
             </Form.Group>
-            <hr />
+            <hr className="my-4" />
             <p className="text-muted small">
               Dejar los siguientes campos en blanco si no deseas cambiar la contraseña.
             </p>
@@ -185,10 +189,10 @@ const SideBar = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseProfileModal}>
+          <Button variant="secondary" className="apple-button-secondary" onClick={handleCloseProfileModal}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleProfileSaveChanges}>
+          <Button variant="primary" className="apple-button-primary" onClick={handleProfileSaveChanges}>
             Guardar Cambios
           </Button>
         </Modal.Footer>

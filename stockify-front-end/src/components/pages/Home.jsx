@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Spinner } from 'react-bootstrap';
-import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus } from 'react-icons/bs';
+import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsXCircleFill, BsCheckCircleFill } from 'react-icons/bs';
 import VentasChart from '../../components/VentasChart';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -16,14 +16,47 @@ const KpiCard = ({ title, value, icon, color }) => (
     </div>
 );
 
+const AppleStyleAlert = ({ message, onClose }) => {
+    if (!message) return null;
+    return (
+        <div className="apple-style-alert">
+            <BsXCircleFill className="alert-icon" />
+            <span>{message}</span>
+            <button onClick={onClose} className="close-alert-btn">&times;</button>
+        </div>
+    );
+};
+
+const AppleStyleSuccessToast = ({ message, onClose }) => {
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                onClose();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [message, onClose]);
+
+    if (!message) return null;
+
+    return (
+        <div className="apple-style-toast success">
+            <BsCheckCircleFill className="toast-icon" />
+            <span>{message}</span>
+        </div>
+    );
+};
+
+
 const Home = () => {
-    // OBTENEMOS DATOS... (sin cambios)
     const { products, branchStock, movements, branches, users, loading, addMovement } = useData();
     const { user } = useAuth();
     
-    // ESTADOS Y MANEJADORES DE MODAL... (sin cambios)
     const [showSaleModal, setShowSaleModal] = useState(false);
     const [saleData, setSaleData] = useState({ product: '', quantity: 1, branch: '', description: '' });
+    
+    const [alertMessage, setAlertMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleShowSaleModal = () => {
         let initialBranchId = '';
@@ -33,9 +66,14 @@ const Home = () => {
             initialBranchId = branches[0].id;
         }
         setSaleData({ product: '', quantity: 1, branch: initialBranchId, description: '' });
+        setAlertMessage('');
         setShowSaleModal(true);
     };
-    const handleCloseSaleModal = () => setShowSaleModal(false);
+    
+    const handleCloseSaleModal = () => {
+        setShowSaleModal(false);
+        setAlertMessage('');
+    };
 
     const handleSaleFormChange = (e) => {
         const { name, value } = e.target;
@@ -44,47 +82,73 @@ const Home = () => {
         } else {
             setSaleData({ ...saleData, [name]: value });
         }
+        if (alertMessage) {
+            setAlertMessage('');
+        }
     };
 
     const handleCreateSale = async () => {
-        if (!saleData.product || !saleData.branch || !saleData.quantity) {
-            alert("Por favor, selecciona un producto, sucursal y cantidad.");
+        if (!saleData.product) {
+            setAlertMessage("Por favor, selecciona un producto.");
             return;
         }
+        const quantity = parseInt(saleData.quantity);
+        if (isNaN(quantity) || quantity <= 0) {
+            setAlertMessage("La cantidad debe ser un número mayor a cero.");
+            return;
+        }
+        
+        const productId = parseInt(saleData.product);
+        const branchId = parseInt(saleData.branch);
+
+        const productInStock = branchStock.find(
+            item => item.product === productId && item.branch === branchId
+        );
+
+        if (!productInStock || quantity > productInStock.current_stock) {
+            const availableStock = productInStock ? productInStock.current_stock : 0;
+            setAlertMessage(`Stock insuficiente. Solo hay ${availableStock} unidades disponibles.`);
+            return;
+        }
+
         try {
             await addMovement({
                 movement_type: 'outgoing',
-                product: parseInt(saleData.product),
-                branch: parseInt(saleData.branch),
-                quantity: parseInt(saleData.quantity),
+                product: productId,
+                branch: branchId,
+                quantity: quantity,
                 description: saleData.description || `Venta desde Dashboard`,
                 user: user.id
             });
-            alert(`¡Venta registrada con éxito!`);
+            setSuccessMessage('¡Venta registrada con éxito!');
             handleCloseSaleModal();
         } catch(error) {
             console.log("La API devolvió un error al crear la venta.");
-            const errorMessage = error.response?.data?.detail || "Ocurrió un error.";
-            alert(errorMessage);
+            const apiErrorMessage = error.response?.data?.detail || "Ocurrió un error en el servidor.";
+            setAlertMessage(apiErrorMessage);
         }
     };
 
     const dashboardData = useMemo(() => {
-        if (loading || !products.length || !branchStock.length || !movements.length || !users.length || !user) {
+        if (loading || !products.length || !branchStock.length || !movements.length || !users.length || !user || !branches.length) {
             return { totalProducts: 0, lowStockCount: 0, monthlySales: 0, totalUsersInScope: 0, lowStockProducts: [] };
         }
-
-        // --- CÁLCULOS DE STOCK Y VENTAS (sin cambios) ---
+        
+        // --- CAMBIO 1: Añadimos el nombre de la sucursal a los productos con bajo stock ---
         const lowStockItems = branchStock.filter(p => p.current_stock <= 10)
             .map(stockItem => {
                 const productDetails = products.find(p => p.id === stockItem.product);
-                return { ...stockItem, productName: productDetails?.name || 'N/A' };
+                const branchDetails = branches.find(b => b.id === stockItem.branch); // Buscamos la sucursal
+                return { 
+                    ...stockItem, 
+                    productName: productDetails?.name || 'N/A',
+                    branchName: branchDetails?.name || 'N/A' // Añadimos el nombre de la sucursal
+                };
             });
-        
+            
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
-
         const salesValue = movements
             .filter(m => {
                 const movementDate = new Date(m.date);
@@ -97,17 +161,13 @@ const Home = () => {
                 if (!product || !product.price) return sum; 
                 return sum + (parseFloat(product.price) * mov.quantity);
             }, 0);
-
-        // --- 💡 LÓGICA CORREGIDA PARA CONTAR USUARIOS ---
         let totalUsersInScope = 0;
         if (user.role === 'admin') {
             totalUsersInScope = users.length;
         } else if (user.role === 'employee') {
-            // Filtra por usuarios que son admin O que están en la misma sucursal.
             const usersInScope = users.filter(u => u.role === 'admin' || u.branch === user.branch);
             totalUsersInScope = usersInScope.length;
         }
-
         return {
             totalProducts: products.length,
             lowStockCount: lowStockItems.length,
@@ -115,13 +175,12 @@ const Home = () => {
             totalUsersInScope: totalUsersInScope,
             lowStockProducts: lowStockItems
         };
-    }, [products, branchStock, movements, users, loading, user]);
+    }, [products, branchStock, movements, users, branches, loading, user]); // Se añade 'branches' a las dependencias
 
-    // RESTO DEL COMPONENTE... (sin cambios)
     const availableProductsForSale = useMemo(() => {
         if (!saleData.branch) return [];
         const stockInSelectedBranch = branchStock.filter(
-            item => item.branch === parseInt(saleData.branch) && item.current_stock > 0
+            item => item.branch === saleData.branch && item.current_stock > 0
         );
         const availableProductIds = stockInSelectedBranch.map(item => item.product);
         return products.filter(p => availableProductIds.includes(p.id));
@@ -133,8 +192,14 @@ const Home = () => {
         return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
     }
 
+
     return (
         <Container fluid>
+            <AppleStyleSuccessToast 
+                message={successMessage} 
+                onClose={() => setSuccessMessage('')} 
+            />
+
             <header className="d-flex align-items-center justify-content-between dashboard-header">
                 <div>
                     <h1 className="dashboard-title">¡Hola, {user ? user.name : 'Usuario'}!</h1>
@@ -150,11 +215,9 @@ const Home = () => {
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Total de Productos" value={dashboardData.totalProducts} icon={<BsBoxSeam size={32} />} color="primary" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Ventas del Mes" value={formatCurrency(dashboardData.monthlySales)} icon={<BsCashCoin size={32} />} color="success" /></Col>
                 <Col md={6} lg={3} className="mb-4"><KpiCard title="Productos con Bajo Stock" value={dashboardData.lowStockCount} icon={<BsArrowDownCircle size={32} />} color="warning" /></Col>
-                {/* Sugerencia: podrías cambiar el título dinámicamente si eliges la Opción 2 */}
                 <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Equipo de la Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
             </Row>
 
-            {/* ... Resto del JSX sin cambios ... */}
             <Row>
                 <Col xl={8} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
@@ -171,9 +234,17 @@ const Home = () => {
                                 </thead>
                                 <tbody>
                                     {dashboardData.lowStockProducts.map(product => (
-                                        <tr key={product.id}>
-                                            <td>{product.productName}</td>
-                                            <td className="text-end"><Badge bg="danger-light" text="danger" pill className="p-2">{product.current_stock}</Badge></td>
+                                        <tr key={`${product.id}-${product.branch}`}>
+                                            {/* --- CAMBIO 2: Mostramos el nombre del producto y debajo la sucursal --- */}
+                                            <td>
+                                                <div>{product.productName}</div>
+                                                <small className="text-muted">{product.branchName}</small>
+                                            </td>
+                                            <td className="text-end">
+                                                <Badge bg="danger-light" text="danger" pill className="p-2">
+                                                    {product.current_stock}
+                                                </Badge>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -186,6 +257,7 @@ const Home = () => {
             <Modal show={showSaleModal} onHide={handleCloseSaleModal} centered>
                 <Modal.Header closeButton><Modal.Title>Registrar Nueva Venta</Modal.Title></Modal.Header>
                 <Modal.Body>
+                    <AppleStyleAlert message={alertMessage} onClose={() => setAlertMessage('')} />
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Desde Sucursal</Form.Label>

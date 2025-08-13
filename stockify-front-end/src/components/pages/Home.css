@@ -12,7 +12,7 @@
   color: #6c757d;
 }
 
-/* -- NUEVO DISEÑO PARA LAS TARJETAS KPI -- */
+/* -- DISEÑO PARA LAS TARJETAS KPI -- */
 .kpi-card {
   background-color: #ffffff;
   border: none;
@@ -42,7 +42,7 @@
   color: #142331;
 }
 
-/* -- NUEVO DISEÑO PARA LA TABLA DE BAJO STOCK -- */
+/* -- DISEÑO PARA LA TABLA DE BAJO STOCK -- */
 .low-stock-card, .chart-card {
   border: none;
   border-radius: 0.75rem;
@@ -77,7 +77,7 @@
   border-bottom-right-radius: 0.5rem;
 }
 
-/* Botón "Crear Venta" con estilo más sutil */
+/* -- Botón "Crear Venta" -- */
 .btn-create-sale {
     background-color: #3498db;
     border: none;
@@ -91,45 +91,168 @@
 }
 
 
+/* --- Notificaciones Toast y Alertas --- */
+@keyframes slideDownFadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.apple-style-alert {
+    background-color: #ff3b3020;
+    color: #ff3b30;
+    border: 1px solid #ff3b3050;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    animation: slideDownFadeIn 0.3s ease-out;
+}
+.apple-style-alert .alert-icon { font-size: 1.2rem; margin-right: 0.75rem; }
+.apple-style-alert .close-alert-btn { background: none; border: none; color: #ff3b30; font-size: 1.5rem; margin-left: auto; padding: 0 0.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.apple-style-alert .close-alert-btn:hover { opacity: 1; }
+
+@keyframes fadeInToast {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.apple-style-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    z-index: 2000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: fadeInToast 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.apple-style-toast.success { background-color: #34c759; color: white; }
+.apple-style-toast .toast-icon { font-size: 1.2rem; margin-right: 0.75rem; }
+
+
+/* --- ESTILOS PARA EL MODAL DE VENTA --- */
+.modal-content {
+    border-radius: 1.25rem !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e5e5e5 !important;
+    padding: 1.5rem;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #142331;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border-radius: 0.75rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #ffffff;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+}
+
+.form-control:disabled, .form-control[readonly] {
+    background-color: #e9ecef;
+    opacity: 0.8;
+}
+
+.modal-footer {
+    border-top: 1px solid #e5e5e5 !important;
+    padding: 1rem 1.5rem;
+}
+
+.modal-footer .btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+    border-radius: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+.modal-footer .btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #e9ecef;
+    color: #343a40;
+    border-color: #e9ecef;
+    border-radius: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+.modal-footer .btn-secondary:hover {
+    background-color: #dee2e6;
+    border-color: #dee2e6;
+}
+
+
 /* --- MEDIA QUERIES PARA PANTALLAS PEQUEÑAS (CELULARES) --- */
 @media (max-width: 767px) {
   .dashboard-header {
-    /* Apila el título y el botón */
     flex-direction: column;
-    /* Alinea todo al inicio */
     align-items: flex-start !important;
-    gap: 1.5rem; /* Espacio entre título y botón */
+    gap: 1.5rem;
     margin-bottom: 2rem;
   }
 
   .dashboard-title {
-    font-size: 1.8rem; /* Reduce el tamaño del título principal */
+    font-size: 1.8rem;
   }
 
   .dashboard-subtitle {
     font-size: 1rem;
   }
 
-  /* El cambio más importante: hace las tarjetas más compactas */
   .kpi-card {
     padding: 0.5rem;
-    flex-direction: row; /* Pone el ícono al lado del texto */
+    flex-direction: row;
     align-items: center;
     justify-content: flex-start;
   }
 
   .kpi-icon-wrapper {
-    margin-bottom: 0; /* Quita el margen de abajo del ícono */
-    margin-right: 1rem; /* Añade espacio a la derecha del ícono */
+    margin-bottom: 0;
+    margin-right: 1rem;
   }
   
   .kpi-value {
-    font-size: 1.5rem; /* Reduce el tamaño del número grande */
+    font-size: 1.5rem;
   }
 
   .low-stock-table tbody td {
-    padding: 0.75rem; /* Reduce el padding de las celdas de la tabla */
+    padding: 0.75rem;
   }
 }
-
-
