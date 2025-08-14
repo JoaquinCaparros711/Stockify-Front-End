@@ -286,3 +286,29 @@
     padding: 0.6rem 1.25rem;
     font-weight: 600;
 }
+
+/* --- Estilos para el Buscador --- */
+.products-toolbar {
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-wrapper {
+    position: relative;
+    max-width: 400px;
+    margin-left: auto;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    pointer-events: none;
+}
+
+.search-input {
+    padding-left: 2.5rem !important;
+    border-radius: 0.75rem !important;
+}

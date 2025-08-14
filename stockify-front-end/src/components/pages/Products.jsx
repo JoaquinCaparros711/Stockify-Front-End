@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Row, Col, Button, Card, Dropdown, Table, Form, Modal, Spinner } from 'react-bootstrap';
-import { BsPlus, BsBoxSeam, BsGraphUp, BsWallet2, BsThreeDotsVertical, BsPencilFill, BsTrashFill, BsXCircleFill, BsCheckCircleFill, BsExclamationTriangleFill } from 'react-icons/bs';
+import { BsPlus, BsBoxSeam, BsGraphUp, BsWallet2, BsThreeDotsVertical, BsPencilFill, BsTrashFill, BsXCircleFill, BsCheckCircleFill, BsExclamationTriangleFill, BsSearch } from 'react-icons/bs';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import "./Product.css";
 
-// --- Componentes de Notificación (sin cambios) ---
+// --- Componente para la Alerta de Error Estilo Apple ---
 const AppleStyleAlert = ({ message, onClose }) => {
     if (!message) return null;
     return (
@@ -17,6 +17,7 @@ const AppleStyleAlert = ({ message, onClose }) => {
     );
 };
 
+// --- Componente para el Toast de Éxito Estilo Apple ---
 const AppleStyleSuccessToast = ({ message, onClose }) => {
     useEffect(() => {
         if (message) {
@@ -34,6 +35,7 @@ const AppleStyleSuccessToast = ({ message, onClose }) => {
     );
 };
 
+// --- Componente para las Tarjetas KPI ---
 const KpiCard = ({ title, value, icon, color }) => (
     <div className="kpi-card shadow-sm">
         <div className={`kpi-icon-wrapper text-${color}`}>{icon}</div>
@@ -48,17 +50,19 @@ const Products = () => {
     const { products, loading, addProduct, updateProduct, deleteProduct } = useData();
     const { user } = useAuth();
 
+    // Estados para modales y formularios
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState({ name: '', description: '', price: '', category: ''});
     
+    // Estados para notificaciones
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-
-    // --- NUEVOS ESTADOS PARA EL MODAL DE CONFIRMACIÓN ---
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
-
+    
+    // Estado para el término de búsqueda
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         if (editingProduct) {
@@ -81,20 +85,16 @@ const Products = () => {
     };
 
     const handleSaveChanges = async () => {
+        // Validación de nombre
         const trimmedName = formData.name.trim();
-        if (!trimmedName) {
-            return setAlertMessage('El nombre del producto es obligatorio.');
-        }
-        if (/^\d+$/.test(trimmedName)) {
-            return setAlertMessage('El nombre no puede consistir solo en números.');
-        }
+        if (!trimmedName) return setAlertMessage('El nombre del producto es obligatorio.');
+        if (/^\d+$/.test(trimmedName)) return setAlertMessage('El nombre no puede consistir solo en números.');
         const isNameDuplicate = products.some(
             p => p.name.toLowerCase() === trimmedName.toLowerCase() && p.id !== (editingProduct ? editingProduct.id : null)
         );
-        if (isNameDuplicate) {
-            return setAlertMessage('Ya existe un producto con este nombre.');
-        }
+        if (isNameDuplicate) return setAlertMessage('Ya existe un producto con este nombre.');
 
+        // Validación de precio
         const price = parseFloat(formData.price);
         if (isNaN(price) || price <= 0) {
             return setAlertMessage('El precio debe ser un número mayor a cero.');
@@ -115,21 +115,16 @@ const Products = () => {
         }
     };
     
-    // --- NUEVAS FUNCIONES PARA MANEJAR EL MODAL DE BORRADO ---
-    
-    // 1. Al hacer clic en "Eliminar", abre el modal de confirmación
     const handleDeleteClick = (product) => {
         setProductToDelete(product);
         setShowDeleteConfirm(true);
     };
 
-    // 2. Si el usuario cancela, cierra el modal
     const handleCloseDeleteConfirm = () => {
         setProductToDelete(null);
         setShowDeleteConfirm(false);
     };
     
-    // 3. Si el usuario confirma, ejecuta la eliminación
     const handleConfirmDelete = async () => {
         if (productToDelete) {
             try {
@@ -138,16 +133,30 @@ const Products = () => {
             } catch (error) {
                 alert('Hubo un error al eliminar el producto.');
             } finally {
-                handleCloseDeleteConfirm(); // Cierra el modal en cualquier caso
+                handleCloseDeleteConfirm();
             }
         }
     };
 
-
+    // Lógica de filtrado con búsqueda
     const displayProducts = useMemo(() => {
         if (loading || !Array.isArray(products)) return [];
-        return products;
-    }, [products, loading]);
+
+        let filteredProducts = products;
+
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            filteredProducts = filteredProducts.filter(product => 
+                // Buscamos solo en el nombre...
+                product.name.toLowerCase().includes(lowercasedTerm) ||
+                // ...y en la categoría.
+                (product.category && product.category.toLowerCase().includes(lowercasedTerm))
+            );
+        }
+        
+        return filteredProducts;
+
+    }, [products, loading, searchTerm]);
 
     const totalCatalogValue = displayProducts.reduce((sum, product) => sum + parseFloat(product.price || 0), 0);
     const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
@@ -169,13 +178,15 @@ const Products = () => {
                 <div>
                     <h1 className="page-title">Catálogo de Productos</h1>
                     <p className="page-subtitle">
-                        {isAdmin ? "Administra los productos base de tu negocio." : "Productos disponibles en tu sucursal."}
+                        {isAdmin ? "Administra los productos base de tu negocio." : "Productos disponibles para movimientos."}
                     </p>
                 </div>
-                <Button className="btn-add-product" onClick={handleShowAddModal}>
-                    <BsPlus size={22} className="me-2" />
-                    Agregar Producto
-                </Button>
+                {isAdmin && (
+                    <Button className="btn-add-product" onClick={handleShowAddModal}>
+                        <BsPlus size={22} className="me-2" />
+                        Agregar Producto
+                    </Button>
+                )}
             </header>
 
             <Row className="mb-4">
@@ -185,6 +196,25 @@ const Products = () => {
             </Row>
 
             <Card className="shadow-sm products-table-card">
+                <div className="products-toolbar">
+                    <Row className="justify-content-between align-items-center">
+                        <Col xs={12} md={6}>
+                            <h5 className="mb-md-0">Listado de Productos</h5>
+                        </Col>
+                        <Col xs={12} md={6}>
+                            <div className="search-wrapper">
+                                <BsSearch className="search-icon" />
+                                <Form.Control 
+                                    type="text"
+                                    placeholder="Buscar por nombre, categoría..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input"
+                                />
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
                 <Table responsive className="products-table">
                     <thead>
                         <tr>
@@ -211,7 +241,6 @@ const Products = () => {
                                             <Dropdown.Toggle as="button" bsPrefix="p-0" className="btn btn-link text-muted"><BsThreeDotsVertical /></Dropdown.Toggle>
                                             <Dropdown.Menu>
                                                 <Dropdown.Item onClick={() => handleShowEditModal(product)}><BsPencilFill className="me-2" /> Editar Producto</Dropdown.Item>
-                                                {/* MODIFICADO: Llama a la nueva función */}
                                                 <Dropdown.Item onClick={() => handleDeleteClick(product)} className="text-danger"><BsTrashFill className="me-2" /> Eliminar Producto</Dropdown.Item>
                                             </Dropdown.Menu>
                                         </Dropdown>
@@ -223,7 +252,6 @@ const Products = () => {
                 </Table>
             </Card> 
 
-            {/* Modal de Agregar/Editar Producto */}
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>{editingProduct ? 'Editar Producto' : 'Agregar Nuevo Producto'}</Modal.Title>
@@ -245,7 +273,6 @@ const Products = () => {
                 </Modal.Footer>
             </Modal>
 
-            {/* --- NUEVO MODAL DE CONFIRMACIÓN PARA ELIMINAR --- */}
             <Modal show={showDeleteConfirm} onHide={handleCloseDeleteConfirm} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>
