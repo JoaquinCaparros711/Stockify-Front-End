@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { NavLink } from "react-router-dom"
 import { sidebarItems, logoutItem } from "../data/sidebarData.js"
 import { useAuth } from "../context/AuthContext"
-import { useData } from "../context/DataContext" // Importar useData
+import { useData } from "../context/DataContext"
 import { Dropdown, Modal, Button, Form, Row, Col } from "react-bootstrap"
 import { BsList, BsExclamationTriangleFill, BsPencilFill, BsXCircleFill, BsCheckCircleFill } from "react-icons/bs"
 import "./SideBar.css"
 
-// --- Componente para Alerta de Error ---
+// --- Componentes de Notificación ---
 const AppleStyleAlert = ({ message, onClose }) => {
     if (!message) return null;
     return (
@@ -21,8 +21,6 @@ const AppleStyleAlert = ({ message, onClose }) => {
     );
 };
 
-// --- Componente para Toast de Éxito ---
-// (Este componente debería vivir en un archivo principal como App.js para ser visible globalmente)
 const AppleStyleSuccessToast = ({ message, onClose }) => {
     useEffect(() => {
         if (message) {
@@ -43,7 +41,7 @@ const AppleStyleSuccessToast = ({ message, onClose }) => {
 
 const SideBar = () => {
   const { user, logout, updateProfile } = useAuth();
-  const { users } = useData(); // Obtener lista de usuarios para validación de email
+  const { users } = useData();
   const [isOpen, setIsOpen] = useState(false);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -92,7 +90,6 @@ const SideBar = () => {
   const handleProfileSaveChanges = async () => {
     const { name, email, password, confirmPassword } = profileData;
 
-    // --- Validaciones del Frontend ---
     const trimmedName = name.trim();
     if (!trimmedName) return setAlertMessage("El nombre completo es obligatorio.");
     if (/\d/.test(trimmedName)) return setAlertMessage("El nombre no debe contener números.");
@@ -101,22 +98,19 @@ const SideBar = () => {
     if (!trimmedEmail) return setAlertMessage("El email es obligatorio.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) return setAlertMessage("El formato del email es inválido.");
     
-    // Validar que el email no esté en uso por OTRO usuario
     const isEmailDuplicate = users.some(
         u => u.email.toLowerCase() === trimmedEmail.toLowerCase() && u.id !== user.id
     );
     if (isEmailDuplicate) return setAlertMessage("Ese email ya está registrado por otro usuario.");
 
-    // Validar contraseña solo si se intenta cambiar
     if (password || confirmPassword) {
         if (password.length < 8) return setAlertMessage("La nueva contraseña debe tener al menos 8 caracteres.");
         if (!/[A-Z]/.test(password)) return setAlertMessage("La contraseña debe contener al menos una mayúscula.");
         if (!/\d/.test(password)) return setAlertMessage("La contraseña debe contener al menos un número.");
         if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return setAlertMessage("La contraseña debe contener al menos un símbolo.");
-        if (password !== confirmPassword) return setAlertMessage("Las nuevas contraseñas no coinciden.");
+        if (password !== confirmPassword) return setAlertMessage("Las contraseñas no coinciden.");
     }
     
-    // Si las validaciones pasan...
     try {
         const payload = { name: trimmedName, email: trimmedEmail };
         if (password) {
@@ -131,9 +125,17 @@ const SideBar = () => {
     }
   };
 
+  // --- Lógica para filtrar los items del sidebar según el rol ---
+  const visibleItems = useMemo(() => {
+    if (user && user.role === 'admin') {
+      return sidebarItems; // El admin ve todos los items
+    }
+    // El empleado solo ve los items que NO están marcados como 'adminOnly'
+    return sidebarItems.filter(item => !item.adminOnly);
+  }, [user]); // La lista se recalcula si el usuario cambia
+
   return (
     <>
-      {/* El Toast de éxito debe estar en un componente superior como App.js o Home.js */}
       <AppleStyleSuccessToast message={successMessage} onClose={() => setSuccessMessage('')} />
 
       <button className="sidebar-toggle-btn-apple" onClick={toggleSidebar}>
@@ -146,7 +148,8 @@ const SideBar = () => {
         </div>
         <nav className="sidebar-nav-apple">
           <ul>
-            {sidebarItems.map((item, index) => (
+            {/* Mapeamos sobre la lista ya filtrada de 'visibleItems' */}
+            {visibleItems.map((item, index) => (
               <li key={index} onClick={() => isOpen && setIsOpen(false)}>
                 {item.type === "heading" ? (
                   <span className="nav-heading-apple">{item.text}</span>

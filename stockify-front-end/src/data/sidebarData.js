@@ -5,6 +5,7 @@ import { AiOutlineStock } from "react-icons/ai";
 import { MdOutlineAddHomeWork } from "react-icons/md";
 import { HiOutlineUserAdd } from "react-icons/hi";
 import { BsBoxArrowLeft } from "react-icons/bs";
+import { BsFileEarmarkText } from 'react-icons/bs';
 
 
 export const sidebarItems = [
@@ -14,6 +15,7 @@ export const sidebarItems = [
   { path: '/stock', icon: <AiOutlineStock />, text: 'Stock' },
   { path: '/sucursales', icon: <MdOutlineAddHomeWork />, text: 'Sucursales' },
   { path: '/usuarios', icon: <HiOutlineUserAdd />, text: 'Usuarios' },
+  { path: '/reportes', icon: <BsFileEarmarkText />, adminOnly: true, text: 'Reportes' },
 ];
 
 export const logoutItem = {

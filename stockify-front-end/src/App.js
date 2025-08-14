@@ -18,6 +18,7 @@ import Branchs from './components/pages/Branchs';
 import Users from './components/pages/Users';
 import { DataProvider } from './context/DataContext';
 import PublicRoute from './components/PublicRoute';
+import Reportes from './components/Reportes';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="stock" element={<Stock />} />
               <Route path="sucursales" element={<Branchs />} />
               <Route path="usuarios" element={<Users />} />
+              <Route path="reportes" element={<Reportes />} />
             </Route>
           </Routes>
         </DataProvider>
