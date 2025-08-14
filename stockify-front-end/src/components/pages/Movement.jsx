@@ -119,7 +119,7 @@ const Movements = () => {
         if (movementType === 'outgoing') {
             const productIdsInBranch = new Set(
                 branchStock
-                    .filter(stock => stock.branch == employeeBranchId && stock.current_stock > 0)
+                    .filter(stock => stock.branch === employeeBranchId && stock.current_stock > 0)
                     .map(stock => stock.product)
             );
             return products.filter(p => productIdsInBranch.has(p.id));

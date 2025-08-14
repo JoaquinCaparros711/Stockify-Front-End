@@ -73,8 +73,10 @@ export const AuthProvider = ({ children }) => {
 
             navigate("/")
         } catch (error) {
-            console.error("Error en el login:", error.response?.data)
-            alert("Error: Usuario o contraseña incorrectos.")
+            console.error("Error en el login:", error);
+            // --- ¡LÍNEA CLAVE! ---
+            // Esto "devuelve" el error al componente que llamó a la función.
+            throw error;
         }
     }
 
@@ -95,7 +97,6 @@ export const AuthProvider = ({ children }) => {
                 },
             })
 
-            alert("¡Cuenta creada con éxito! Ahora puedes iniciar sesión.")
             navigate("/login")
         } catch (error) {
             const errorData = error.response?.data
