@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Container, Row, Col, Button, Card, Dropdown, Table, Modal, Form, Spinner } from 'react-bootstrap';
-import { BsArrowDown, BsArrowUp, BsPlus, BsXCircleFill, BsCheckCircleFill } from 'react-icons/bs';
+import { Container, Row, Col, Button, Card, Dropdown, Table, Modal, Form, Spinner, Pagination } from 'react-bootstrap';
+import { BsArrowDown, BsArrowUp, BsPlus, BsXCircleFill, BsCheckCircleFill, BsCalendarEvent } from 'react-icons/bs';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import './Movement.css';
@@ -45,7 +45,13 @@ const Movements = () => {
     const isEmployee = user.role === 'employee';
 
     const [showModal, setShowModal] = useState(false);
-    const [filter, setFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('');
+    
+    // --- Estados para la Paginación ---
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     const [newMovementData, setNewMovementData] = useState({
         movement_type: '',
         product: '',
@@ -54,13 +60,12 @@ const Movements = () => {
         description: ''
     });
 
-    // --- NUEVOS ESTADOS PARA NOTIFICACIONES ---
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
     const handleCloseModal = () => {
         setShowModal(false);
-        setAlertMessage(''); // Limpiar alerta al cerrar
+        setAlertMessage('');
     };
     
     const handleShowModal = () => {
@@ -75,40 +80,26 @@ const Movements = () => {
             quantity: '',
             description: ''
         });
-        setAlertMessage(''); // Limpiar alerta al abrir
+        setAlertMessage('');
         setShowModal(true);
     };
 
     const handleFormChange = (e) => {
         setNewMovementData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         if (alertMessage) {
-            setAlertMessage(''); // Limpiar alerta al empezar a corregir
+            setAlertMessage('');
         }
     };
 
-    // --- FUNCIÓN MODIFICADA CON VALIDACIONES ---
     const handleSaveChanges = async () => {
         const { movement_type, product, branch, quantity } = newMovementData;
-
-        // 1. Validar Tipo de Movimiento
-        if (!movement_type) {
-            return setAlertMessage('Debes seleccionar un tipo de movimiento.');
-        }
-        // 2. Validar Producto
-        if (!product) {
-            return setAlertMessage('Debes seleccionar un producto.');
-        }
-        // 3. Validar Sucursal
-        if (!branch) {
-            return setAlertMessage('Debes seleccionar una sucursal.');
-        }
-        // 4. Validar Cantidad
+        if (!movement_type) return setAlertMessage('Debes seleccionar un tipo de movimiento.');
+        if (!product) return setAlertMessage('Debes seleccionar un producto.');
+        if (!branch) return setAlertMessage('Debes seleccionar una sucursal.');
         const numQuantity = parseInt(quantity);
         if (isNaN(numQuantity) || numQuantity <= 0) {
             return setAlertMessage('La cantidad debe ser un número mayor a cero.');
         }
-
-        // Si todo es válido, procedemos
         try {
             await addMovement({ ...newMovementData, user: user.id });
             setSuccessMessage('¡Movimiento registrado con éxito!');
@@ -119,7 +110,6 @@ const Movements = () => {
         }
     };
     
-    // El resto de la lógica (useMemo, etc.) no cambia...
     const availableProducts = useMemo(() => {
         if (!isEmployee) { return products; }
         const employeeBranchId = user.branch;
@@ -129,7 +119,7 @@ const Movements = () => {
         if (movementType === 'outgoing') {
             const productIdsInBranch = new Set(
                 branchStock
-                    .filter(stock => stock.branch === employeeBranchId && stock.current_stock > 0)
+                    .filter(stock => stock.branch == employeeBranchId && stock.current_stock > 0)
                     .map(stock => stock.product)
             );
             return products.filter(p => productIdsInBranch.has(p.id));
@@ -140,13 +130,16 @@ const Movements = () => {
     const displayMovements = useMemo(() => {
         if (loading || !Array.isArray(movements)) return [];
         return movements.map(mov => {
+            // --- Corrección de Fecha para evitar desfasaje por UTC ---
             let validDate = null;
             if (mov.date) {
-                try {
-                    const isoString = mov.date.replace(' ', 'T').split('.')[0];
-                    const parsed = new Date(isoString);
-                    if (!isNaN(parsed.getTime())) { validDate = parsed; }
-                } catch (e) { console.error("Fecha inválida al parsear:", mov.date); }
+                const dateString = mov.date.split('.')[0].replace(' ', 'T');
+                const date = new Date(dateString);
+                
+                // Si la fecha es válida, la usamos. Esto maneja la fecha local correctamente.
+                if (!isNaN(date.getTime())) {
+                    validDate = date;
+                }
             }
             return {
                 ...mov,
@@ -155,10 +148,26 @@ const Movements = () => {
                 userName: mov.user_name || 'N/A',
                 parsedDate: validDate
             };
-        });
+        }).sort((a, b) => (b.parsedDate || 0) - (a.parsedDate || 0)); // Ordenar por fecha más reciente
     }, [movements, loading]);
 
-    const filteredMovements = displayMovements.filter(mov => filter === 'all' || mov.movement_type === filter);
+    const filteredMovements = useMemo(() => {
+        setCurrentPage(1); // Reiniciar a la página 1 cada vez que cambian los filtros
+        return displayMovements.filter(mov => {
+            const typeMatch = typeFilter === 'all' || mov.movement_type === typeFilter;
+            
+            // Ajuste en la comparación de fechas para ser más robusto
+            const dateMatch = !dateFilter || (mov.parsedDate && mov.parsedDate.toLocaleDateString('sv-SE') === dateFilter);
+
+            return typeMatch && dateMatch;
+        });
+    }, [displayMovements, typeFilter, dateFilter]);
+
+    // Lógica para calcular la página actual
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredMovements.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredMovements.length / itemsPerPage);
     
     if (loading) {
         return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
@@ -167,7 +176,6 @@ const Movements = () => {
 
     return (
         <Container fluid className="movements-container">
-            {/* --- AQUÍ SE RENDERIZA EL TOAST DE ÉXITO --- */}
             <AppleStyleSuccessToast message={successMessage} onClose={() => setSuccessMessage('')} />
 
             <header className="d-flex align-items-center justify-content-between page-header">
@@ -183,19 +191,33 @@ const Movements = () => {
 
             <Card className="shadow-sm movements-table-card">
                 <div className="movements-toolbar">
-                    <Row className="align-items-center">
-                        <Col xs={12} md={6}><h5 className="mb-0">Historial de Movimientos</h5></Col>
-                        <Col xs={12} md={6} className="d-flex justify-content-end align-items-center">
-                            <Dropdown onSelect={(eventKey) => setFilter(eventKey)}>
-                                <Dropdown.Toggle variant="light" id="dropdown-type">
-                                    Filtrar: {filter === 'all' ? 'Todos' : (filter === 'incoming' ? 'Entradas' : 'Salidas')}
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu>
-                                    <Dropdown.Item eventKey="all">Todos</Dropdown.Item>
-                                    <Dropdown.Item eventKey="incoming">Entradas</Dropdown.Item>
-                                    <Dropdown.Item eventKey="outgoing">Salidas</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
+                    <Row className="align-items-center g-2">
+                        <Col xs={12} md="auto"><h5 className="mb-0">Historial de Movimientos</h5></Col>
+                        <Col xs={12} md>
+                            <div className="d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+                                <div className="date-filter-wrapper">
+                                    <BsCalendarEvent className="date-filter-icon" />
+                                    <Form.Control 
+                                        type="date" 
+                                        value={dateFilter} 
+                                        onChange={(e) => setDateFilter(e.target.value)}
+                                    />
+                                    {dateFilter && (
+                                        <button className="clear-date-btn" onClick={() => setDateFilter('')}>&times;</button>
+                                    )}
+                                </div>
+
+                                <Dropdown onSelect={(eventKey) => setTypeFilter(eventKey)}>
+                                    <Dropdown.Toggle variant="light" id="dropdown-type">
+                                        Filtrar: {typeFilter === 'all' ? 'Todos' : (typeFilter === 'incoming' ? 'Entradas' : 'Salidas')}
+                                    </Dropdown.Toggle>
+                                    <Dropdown.Menu>
+                                        <Dropdown.Item eventKey="all">Todos</Dropdown.Item>
+                                        <Dropdown.Item eventKey="incoming">Entradas</Dropdown.Item>
+                                        <Dropdown.Item eventKey="outgoing">Salidas</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
+                            </div>
                         </Col>
                     </Row>
                 </div>
@@ -212,7 +234,7 @@ const Movements = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredMovements.map((movement) => (
+                        {currentItems.map((movement) => (
                             <tr key={movement.id}>
                                 <td data-label="Fecha y Hora">
                                     {movement.parsedDate ? (
@@ -239,14 +261,28 @@ const Movements = () => {
                         ))}
                     </tbody>
                 </Table>
+
+                {totalPages > 1 && (
+                    <div className="d-flex justify-content-center p-3">
+                        <Pagination>
+                            <Pagination.Prev 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                                disabled={currentPage === 1}
+                            />
+                            <Pagination.Item active>{`Página ${currentPage} de ${totalPages}`}</Pagination.Item>
+                            <Pagination.Next 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                                disabled={currentPage === totalPages}
+                            />
+                        </Pagination>
+                    </div>
+                )}
             </Card>
 
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton><Modal.Title>Registrar Nuevo Movimiento</Modal.Title></Modal.Header>
                 <Modal.Body>
-                    {/* --- AQUÍ SE RENDERIZA LA ALERTA DE ERROR --- */}
                     <AppleStyleAlert message={alertMessage} onClose={() => setAlertMessage('')} />
-
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Tipo de Movimiento</Form.Label>
