@@ -52,7 +52,7 @@ api.interceptors.response.use(
                 }
 
                 // Hacemos la petición para refrescar el token.
-                const response = await axios.post(`${baseURL}/token/refresh/`, {
+                const response = await axios.post(`${baseURL}/user/token/refresh/`, {
                     refresh: refreshToken
                 });
 
