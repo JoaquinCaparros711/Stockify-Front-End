@@ -255,8 +255,8 @@ const Movements = () => {
                                     <small className="text-muted">{movement.description}</small>
                                 </td>
                                 <td data-label="Cantidad" className="fw-bold text-center">{movement.quantity}</td>
-                                <td data-label="Sucursal">{movement.branchName}</td>
-                                <td data-label="Usuario">{movement.userName}</td>
+                                <td data-label="Sucursal">{movement.branch_name}</td>
+                                <td data-label="Usuario">{movement.user_name}</td>
                             </tr>
                         ))}
                     </tbody>

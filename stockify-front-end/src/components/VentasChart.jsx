@@ -19,16 +19,14 @@ ChartJS.register(
     Legend
 );
 
-const VentasChart = ({ movements = [], products = [] }) => {
+// El componente ya no necesita la lista de 'products'
+const VentasChart = ({ movements = [] }) => {
 
     const chartData = useMemo(() => {
-        // Optimización: Crear un mapa de precios para búsqueda instantánea.
-        const productPriceMap = new Map(products.map(p => [p.id, parseFloat(p.price) || 0]));
-
-        // Crear un mapa para almacenar las ventas de los últimos 7 días.
         const salesByDate = new Map();
         const labels = [];
 
+        // Inicializamos los últimos 7 días con 0
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
@@ -37,17 +35,17 @@ const VentasChart = ({ movements = [], products = [] }) => {
             labels.push(d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''));
         }
 
-        // Procesar los movimientos de venta.
+        // Procesamos los movimientos de venta
         movements.forEach(mov => {
-            // --- LA CORRECCIÓN FINAL ---
-            // Cambiamos 'created_at' por 'date' para que coincida con tu API de Django.
             const movementDateStr = mov.date; 
 
             if (mov.movement_type === 'outgoing' && movementDateStr) {
                 const movementDateKey = new Date(movementDateStr).toISOString().split('T')[0];
 
                 if (salesByDate.has(movementDateKey)) {
-                    const price = productPriceMap.get(mov.product) || 0;
+                    // --- 💡 CAMBIO CLAVE ---
+                    // Usamos el precio que se guardó en el momento del movimiento
+                    const price = parseFloat(mov.price_at_movement) || 0;
                     const saleValue = price * mov.quantity;
                     salesByDate.set(movementDateKey, salesByDate.get(movementDateKey) + saleValue);
                 }
@@ -69,9 +67,8 @@ const VentasChart = ({ movements = [], products = [] }) => {
             ],
         };
 
-    }, [movements, products]);
+    }, [movements]); // Ya no depende de 'products'
 
-    // Configuración de las opciones del gráfico.
     const options = {
         responsive: true,
         maintainAspectRatio: false,

@@ -1,14 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Spinner } from 'react-bootstrap';
 import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsXCircleFill, BsCheckCircleFill } from 'react-icons/bs';
-// --- CAMBIO 1: Importamos AMBOS gráficos ---
 import VentasChart from '../../components/VentasChart';
 import MovimientosChart from '../../components/MovementChart';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import './Home.css';
 
-// ... (El resto de tus componentes y lógica no necesitan cambios)
 const KpiCard = ({ title, value, icon, color }) => (
     <div className="kpi-card shadow-sm">
         <div className={`kpi-icon-wrapper text-${color}`}>{icon}</div>
@@ -151,6 +149,8 @@ const Home = () => {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
+        
+        // --- 💡 CAMBIO CLAVE: Usamos el precio histórico para el KPI ---
         const salesValue = movements
             .filter(m => {
                 const movementDate = new Date(m.date);
@@ -159,10 +159,10 @@ const Home = () => {
                     movementDate.getFullYear() === currentYear;
             })
             .reduce((sum, mov) => {
-                const product = products.find(p => p.id === mov.product);
-                if (!product || !product.price) return sum; 
-                return sum + (parseFloat(product.price) * mov.quantity);
+                const price = parseFloat(mov.price_at_movement) || 0;
+                return sum + (price * mov.quantity);
             }, 0);
+
         let totalUsersInScope = 0;
         if (user.role === 'admin') {
             totalUsersInScope = users.length;
@@ -170,6 +170,7 @@ const Home = () => {
             const usersInScope = users.filter(u => u.role === 'admin' || u.branch === user.branch);
             totalUsersInScope = usersInScope.length;
         }
+
         return {
             totalProducts: products.length,
             lowStockCount: lowStockItems.length,
@@ -220,12 +221,11 @@ const Home = () => {
                 <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Equipo de la Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
             </Row>
             
-            {/* --- CAMBIO 2: Mostramos ambos gráficos uno debajo del otro --- */}
             <Row>
                 <Col xl={12} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
                         <Card.Body className="p-4">
-                            <MovimientosChart movements={movements} products={products}/>
+                            <MovimientosChart movements={movements} products={products} branches={branches}/>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -234,7 +234,8 @@ const Home = () => {
                 <Col xl={8} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
                         <Card.Body className="p-4">
-                            <VentasChart movements={movements} products={products} />
+                            {/* --- 💡 CAMBIO: Ya no se pasa 'products' al gráfico de ventas --- */}
+                            <VentasChart movements={movements} />
                         </Card.Body>
                     </Card>
                 </Col>
