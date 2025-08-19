@@ -1,84 +1,87 @@
-import { createContext, useState, useContext, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import api from "../services/api"
-import { jwtDecode } from "jwt-decode"
+import { createContext, useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import { jwtDecode } from "jwt-decode";
 
-const AuthContext = createContext(null)
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // ✅ Verificar token y restaurar sesión si existe
+    // Al iniciar, intenta restaurar la sesión desde localStorage
     useEffect(() => {
-        const initializeAuth = async () => {
-            const access = localStorage.getItem("accessToken")
-            const savedProfile = localStorage.getItem("userProfile")
+        const initializeAuth = () => {
+            const accessToken = localStorage.getItem("accessToken");
+            const savedUser = localStorage.getItem("user");
 
-            if (access) {
+            if (accessToken && savedUser) {
                 try {
-                    const decoded = jwtDecode(access)
-                    const userId = decoded.user_id
-
-                    if (savedProfile) {
-                        setUser(JSON.parse(savedProfile))
+                    const decodedToken = jwtDecode(accessToken);
+                    // Comprueba si el token de acceso NO ha expirado
+                    if (decodedToken.exp * 1000 > Date.now()) {
+                        setUser(JSON.parse(savedUser));
+                        api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
                     } else {
-                        const res = await api.get(`/user/register/${userId}/`)
-                        localStorage.setItem("userProfile", JSON.stringify(res.data))
-                        setUser(res.data)
+                        // Si el token ha expirado, el interceptor de api.js se encargará de refrescarlo
+                        // en la primera petición. Mientras tanto, podemos mostrar los datos del usuario.
+                        setUser(JSON.parse(savedUser));
                     }
-
-                    // Opcional: set token en axios headers por si hace falta
-                    api.defaults.headers.common["Authorization"] = `Bearer ${access}`
-
-                } catch (e) {
-                    console.error("Error al cargar sesión persistida:", e)
-                    localStorage.removeItem("accessToken")
-                    localStorage.removeItem("refreshToken")
-                    localStorage.removeItem("userProfile")
-                    setUser(null)
+                } catch (error) {
+                    console.error("Token inválido o corrupto, limpiando sesión.", error);
+                    // Si hay un error con el token, limpiamos todo.
+                    localStorage.clear();
+                    setUser(null);
                 }
             }
+            setLoading(false);
+        };
 
-            setLoading(false)
-        }
+        initializeAuth();
+    }, []);
 
-        initializeAuth()
-    }, [])
+    // Escucha el evento 'logout' disparado por el interceptor de la API
+    useEffect(() => {
+        const handleLogoutEvent = () => {
+            logout();
+        };
+
+        window.addEventListener('logout', handleLogoutEvent);
+        return () => {
+            window.removeEventListener('logout', handleLogoutEvent);
+        };
+    }, []); // El array vacío asegura que este efecto se ejecute solo una vez
 
     const login = async (data) => {
         try {
             const response = await api.post("/user/login/", {
                 username: data.username,
                 password: data.password,
-            })
+            });
 
-            const { access, refresh } = response.data
-            localStorage.setItem("accessToken", access)
-            localStorage.setItem("refreshToken", refresh)
+            const { access, refresh } = response.data;
+            localStorage.setItem("accessToken", access);
+            localStorage.setItem("refreshToken", refresh);
 
-            const decodedToken = jwtDecode(access)
+            const decodedToken = jwtDecode(access);
             const userId = decodedToken.user_id;
 
+            // Obtenemos el perfil completo del usuario para guardarlo
             const userProfileResponse = await api.get(`/user/register/${userId}/`);
             const userProfile = userProfileResponse.data;
 
-            localStorage.setItem("userProfile", JSON.stringify(userProfile));
-            setUser(userProfile)
-
-            // Set Authorization en axios
-            api.defaults.headers.common["Authorization"] = `Bearer ${access}`
-
-            navigate("/")
+            localStorage.setItem("user", JSON.stringify(userProfile));
+            setUser(userProfile);
+            
+            api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+            navigate("/");
         } catch (error) {
             console.error("Error en el login:", error);
-            // --- ¡LÍNEA CLAVE! ---
-            // Esto "devuelve" el error al componente que llamó a la función.
-            throw error;
+            throw error; // Lanza el error para que el componente Login lo muestre
         }
-    }
+    };
 
     const register = async (formData) => {
         try {
@@ -95,48 +98,39 @@ export const AuthProvider = ({ children }) => {
                     phone: formData.companyPhone,
                     address: formData.companyAddress,
                 },
-            })
-
-            navigate("/login")
+            });
+            navigate("/login");
         } catch (error) {
-            const errorData = error.response?.data
-            let errorMessage = "Ocurrió un error en el registro."
+            const errorData = error.response?.data;
+            let errorMessage = "Ocurrió un error en el registro.";
             if (errorData) {
                 errorMessage = Object.keys(errorData)
                     .map((key) => {
                         if (key === "company" && typeof errorData[key] === "object") {
                             return Object.keys(errorData[key])
                                 .map((companyKey) => `Empresa - ${companyKey}: ${errorData[key][companyKey]}`)
-                                .join("\n")
+                                .join("\n");
                         }
-                        return `${key}: ${errorData[key]}`
+                        return `${key}: ${errorData[key]}`;
                     })
-                    .join("\n")
+                    .join("\n");
             }
-            alert(errorMessage)
+            alert(errorMessage); // Puedes cambiar esto por una notificación bonita si quieres
         }
-    }
+    };
 
-    const logout = async () => {
-        try {
-            const refreshToken = localStorage.getItem("refreshToken")
-            if (refreshToken) {
-                await api.post("/user/logout/", { refresh: refreshToken })
-            }
-        } catch (error) {
-            console.error("Error al cerrar sesión:", error)
-        } finally {
-            setUser(null)
-            localStorage.removeItem("accessToken")
-            localStorage.removeItem("refreshToken")
-            localStorage.removeItem("userProfile")
-            navigate("/login")
-        }
-    }
+    const logout = () => {
+        setUser(null);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user"); // Limpiamos la key consistente
+        delete api.defaults.headers.common["Authorization"];
+        navigate("/login");
+    };
 
     const updateProfile = async (userId, profileData) => {
         try {
-            const response = await api.patch(`/user/register/${userId}/`, profileData); // URL CORRECTA
+            const response = await api.patch(`/user/register/${userId}/`, profileData);
             
             const updatedUser = response.data;
             setUser(updatedUser);
@@ -147,11 +141,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const value = { user, login, logout, register, updateProfile };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, register, updateProfile }}>
+        <AuthContext.Provider value={value}>
             {!loading && children}
         </AuthContext.Provider>
-    )
-}
+    );
+};
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => useContext(AuthContext);

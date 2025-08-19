@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Spinner } from 'react-bootstrap';
-import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsXCircleFill, BsCheckCircleFill } from 'react-icons/bs';
+// --- 1. Importamos los nuevos íconos ---
+import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsXCircleFill, BsCheckCircleFill, BsTrophyFill, BsAwardFill, BsArchiveFill } from 'react-icons/bs';
 import VentasChart from '../../components/VentasChart';
 import MovimientosChart from '../../components/MovementChart';
 import { useData } from '../../context/DataContext';
@@ -131,8 +132,14 @@ const Home = () => {
     };
 
     const dashboardData = useMemo(() => {
+        // --- 2. Añadimos los nuevos valores por defecto ---
+        const initialData = { 
+            totalProducts: 0, lowStockCount: 0, monthlySales: 0, totalUsersInScope: 0, lowStockProducts: [],
+            bestSeller: 'N/A', worstSeller: 'N/A', topBranch: 'N/A'
+        };
+
         if (loading || !products.length || !branchStock.length || !movements.length || !users.length || !user || !branches.length) {
-            return { totalProducts: 0, lowStockCount: 0, monthlySales: 0, totalUsersInScope: 0, lowStockProducts: [] };
+            return initialData;
         }
         
         const lowStockItems = branchStock.filter(p => p.current_stock <= 10)
@@ -149,19 +156,18 @@ const Home = () => {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
+
+        const monthlySalesMovements = movements.filter(m => {
+            const movementDate = new Date(m.date);
+            return m.movement_type === 'outgoing' &&
+                movementDate.getMonth() === currentMonth &&
+                movementDate.getFullYear() === currentYear;
+        });
         
-        // --- 💡 CAMBIO CLAVE: Usamos el precio histórico para el KPI ---
-        const salesValue = movements
-            .filter(m => {
-                const movementDate = new Date(m.date);
-                return m.movement_type === 'outgoing' &&
-                    movementDate.getMonth() === currentMonth &&
-                    movementDate.getFullYear() === currentYear;
-            })
-            .reduce((sum, mov) => {
-                const price = parseFloat(mov.price_at_movement) || 0;
-                return sum + (price * mov.quantity);
-            }, 0);
+        const salesValue = monthlySalesMovements.reduce((sum, mov) => {
+            const price = parseFloat(mov.price_at_movement) || 0;
+            return sum + (price * mov.quantity);
+        }, 0);
 
         let totalUsersInScope = 0;
         if (user.role === 'admin') {
@@ -171,12 +177,53 @@ const Home = () => {
             totalUsersInScope = usersInScope.length;
         }
 
+        // --- 3. Lógica para las nuevas estadísticas del Admin ---
+        let bestSeller = 'N/A';
+        let worstSeller = 'N/A';
+        let topBranch = 'N/A';
+
+        if (user.role === 'admin' && monthlySalesMovements.length > 0) {
+            // Producto Estrella
+            const salesByProduct = new Map();
+            monthlySalesMovements.forEach(mov => {
+                const currentQty = salesByProduct.get(mov.product_name) || 0;
+                salesByProduct.set(mov.product_name, currentQty + mov.quantity);
+            });
+            if (salesByProduct.size > 0) {
+                bestSeller = [...salesByProduct.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
+            }
+
+            // Producto "Ancla"
+            const soldProductNames = new Set(salesByProduct.keys());
+            const unsoldProducts = products.filter(p => !soldProductNames.has(p.name));
+            if (unsoldProducts.length > 0) {
+                worstSeller = unsoldProducts[0].name;
+            } else {
+                worstSeller = "¡Todo se vendió!";
+            }
+
+            // Sucursal con más ventas
+            const salesByBranch = new Map();
+            monthlySalesMovements.forEach(mov => {
+                const price = parseFloat(mov.price_at_movement) || 0;
+                const saleValue = price * mov.quantity;
+                const currentTotal = salesByBranch.get(mov.branch_name) || 0;
+                salesByBranch.set(mov.branch_name, currentTotal + saleValue);
+            });
+            if (salesByBranch.size > 0) {
+                topBranch = [...salesByBranch.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
+            }
+        }
+
         return {
             totalProducts: products.length,
             lowStockCount: lowStockItems.length,
             monthlySales: salesValue,
             totalUsersInScope: totalUsersInScope,
-            lowStockProducts: lowStockItems
+            lowStockProducts: lowStockItems,
+            bestSeller,
+            worstSeller,
+            topBranch,
         };
     }, [products, branchStock, movements, users, branches, loading, user]);
 
@@ -221,6 +268,36 @@ const Home = () => {
                 <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Equipo de la Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
             </Row>
             
+            {/* --- 4. Nueva Fila de KPIs solo para Admins --- */}
+            {user.role === 'admin' && (
+                <Row>
+                    <Col md={6} lg={4} className="mb-4">
+                        <KpiCard 
+                            title="Producto Estrella (Mes)" 
+                            value={dashboardData.bestSeller} 
+                            icon={<BsTrophyFill size={32} />}
+                            color="warning"
+                        />
+                    </Col>
+                    <Col md={6} lg={4} className="mb-4">
+                        <KpiCard 
+                            title="Sucursal con Más Ventas (Mes)" 
+                            value={dashboardData.topBranch} 
+                            icon={<BsAwardFill size={32} />}
+                            color="info" 
+                        />
+                    </Col>
+                    <Col md={6} lg={4} className="mb-4">
+                        <KpiCard 
+                            title="Producto sin Ventas (Mes)" 
+                            value={dashboardData.worstSeller} 
+                            icon={<BsArchiveFill size={32} />}
+                            color="secondary" 
+                        />
+                    </Col>
+                </Row>
+            )}
+
             <Row>
                 <Col xl={12} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
@@ -234,7 +311,6 @@ const Home = () => {
                 <Col xl={8} className="mb-4">
                     <Card className="shadow-sm h-100 chart-card">
                         <Card.Body className="p-4">
-                            {/* --- 💡 CAMBIO: Ya no se pasa 'products' al gráfico de ventas --- */}
                             <VentasChart movements={movements} />
                         </Card.Body>
                     </Card>
