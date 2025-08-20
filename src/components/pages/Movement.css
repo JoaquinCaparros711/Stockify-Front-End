@@ -1,0 +1,250 @@
+/* --- ANIMACIÓN DE ENTRADA --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.movements-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- ESTILOS DE CABECERA (consistente con otras páginas) --- */
+.page-header {
+    margin-bottom: 2.5rem;
+}
+.page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #142331;
+}
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+.btn-movement {
+    background-color: #3498db;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.btn-movement:hover {
+    background-color: #34495e;
+}
+
+
+/* --- NUEVO DISEÑO PARA LA TABLA DE MOVIMIENTOS --- */
+.movements-table-card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.movements-toolbar {
+    padding: 1.5rem;
+}
+
+.movements-table thead th {
+    border: none !important;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 1rem 1.5rem;
+}
+
+.movements-table tbody tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.movements-table tbody tr:hover {
+    background-color: #f8f9fa; /* Un fondo sutil al pasar el mouse */
+}
+
+.movements-table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef; /* Línea separadora más suave */
+}
+
+/* --- NUEVOS ESTILOS PARA LAS ETIQUETAS (BADGES) --- */
+.badge-in, .badge-out {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4em 0.8em;
+    border-radius: 50rem; /* Para que sea tipo píldora */
+    font-weight: 500;
+}
+
+.badge-in {
+    background-color: rgba(37, 191, 156, 0.15); /* Fondo verde claro */
+    color: #1a7e69; /* Texto verde oscuro */
+}
+
+.badge-out {
+    background-color: rgba(239, 150, 59, 0.15); /* Fondo naranja claro */
+    color: #b56c19; /* Texto naranja oscuro */
+}
+
+/* --- ESTILOS PARA LA ALERTA DE ERROR ESTILO APPLE --- */
+@keyframes slideDownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.apple-style-alert {
+    background-color: #ff3b3020;
+    color: #ff3b30;
+    border: 1px solid #ff3b3050;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    animation: slideDownFadeIn 0.3s ease-out;
+}
+
+.apple-style-alert .alert-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+.apple-style-alert .close-alert-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 1.5rem;
+    margin-left: auto;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.apple-style-alert .close-alert-btn:hover {
+    opacity: 1;
+}
+
+/* --- ESTILOS PARA EL TOAST DE ÉXITO ESTILO APPLE --- */
+@keyframes fadeInToast {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.apple-style-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    z-index: 2000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: fadeInToast 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.apple-style-toast.success {
+    background-color: #34c759;
+    color: white;
+}
+
+.apple-style-toast .toast-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+/* --- Estilos para el Filtro de Fecha --- */
+.date-filter-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.date-filter-wrapper .form-control {
+    padding-left: 2.5rem; /* Espacio para el ícono */
+    border-radius: 0.5rem;
+}
+
+.date-filter-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    pointer-events: none; /* Para poder hacer clic en el input a través del ícono */
+}
+
+.clear-date-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6c757d;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.clear-date-btn:hover {
+    color: #343a40;
+}
+
+/* --- Estilos Mejorados para la Paginación --- */
+.pagination {
+    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    --bs-pagination-disabled-bg: #e9ecef;
+    --bs-pagination-disabled-border-color: #dee2e6;
+    gap: 0.5rem; /* Espacio entre los botones */
+}
+
+.pagination .page-item .page-link {
+    border-radius: 0.75rem !important; /* Bordes bien redondeados */
+    border: none;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.pagination .page-item .page-link:hover {
+    background-color: #dee2e6;
+}
+
+/* Estilo para el indicador de página "Página X de Y" */
+.pagination .page-item.active .page-link {
+    background-color: #34495e; /* Un color oscuro y neutro */
+    color: white;
+    font-weight: 600;
+}
+
+/* Oculta los bordes feos al hacer foco */
+.pagination .page-item .page-link:focus {
+    box-shadow: var(--bs-pagination-focus-box-shadow);
+}

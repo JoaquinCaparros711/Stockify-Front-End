@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, useCallback } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { jwtDecode } from "jwt-decode";
@@ -42,16 +42,6 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
     }, []);
 
-    // Se envuelve logout en useCallback para que su referencia sea estable
-    const logout = useCallback(() => {
-        setUser(null);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user"); // Limpiamos la key consistente
-        delete api.defaults.headers.common["Authorization"];
-        navigate("/login");
-    }, [navigate]); // navigate es una dependencia estable
-
     // Escucha el evento 'logout' disparado por el interceptor de la API
     useEffect(() => {
         const handleLogoutEvent = () => {
@@ -62,7 +52,7 @@ export const AuthProvider = ({ children }) => {
         return () => {
             window.removeEventListener('logout', handleLogoutEvent);
         };
-    }, [logout]); // Se añade 'logout' como dependencia para cumplir la regla de hooks
+    }, []); // El array vacío asegura que este efecto se ejecute solo una vez
 
     const login = async (data) => {
         try {
@@ -84,7 +74,7 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem("user", JSON.stringify(userProfile));
             setUser(userProfile);
-             
+            
             api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
             navigate("/");
         } catch (error) {
@@ -127,6 +117,15 @@ export const AuthProvider = ({ children }) => {
             }
             alert(errorMessage); // Puedes cambiar esto por una notificación bonita si quieres
         }
+    };
+
+    const logout = () => {
+        setUser(null);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user"); // Limpiamos la key consistente
+        delete api.defaults.headers.common["Authorization"];
+        navigate("/login");
     };
 
     const updateProfile = async (userId, profileData) => {
