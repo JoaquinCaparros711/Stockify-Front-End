@@ -12,35 +12,31 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     // Al iniciar, intenta restaurar la sesión desde localStorage
-    useEffect(() => {
-        const initializeAuth = () => {
-            const accessToken = localStorage.getItem("accessToken");
-            const savedUser = localStorage.getItem("user");
+    const initializeAuth = useCallback(() => {
+        const accessToken = localStorage.getItem("accessToken");
+        const savedUser = localStorage.getItem("user");
 
-            if (accessToken && savedUser) {
-                try {
-                    const decodedToken = jwtDecode(accessToken);
-                    // Comprueba si el token de acceso NO ha expirado
-                    if (decodedToken.exp * 1000 > Date.now()) {
-                        setUser(JSON.parse(savedUser));
-                        api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-                    } else {
-                        // Si el token ha expirado, el interceptor de api.js se encargará de refrescarlo
-                        // en la primera petición. Mientras tanto, podemos mostrar los datos del usuario.
-                        setUser(JSON.parse(savedUser));
-                    }
-                } catch (error) {
-                    console.error("Token inválido o corrupto, limpiando sesión.", error);
-                    // Si hay un error con el token, limpiamos todo.
-                    localStorage.clear();
-                    setUser(null);
+        if (accessToken && savedUser) {
+            try {
+                const decodedToken = jwtDecode(accessToken);
+                if (decodedToken.exp * 1000 > Date.now()) {
+                    setUser(JSON.parse(savedUser));
+                    api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+                } else {
+                    setUser(JSON.parse(savedUser));
                 }
+            } catch (error) {
+                console.error("Token inválido o corrupto, limpiando sesión.", error);
+                localStorage.clear();
+                setUser(null);
             }
-            setLoading(false);
-        };
-
-        initializeAuth();
+        }
+        setLoading(false);
     }, []);
+
+    useEffect(() => {
+        initializeAuth();
+    }, [initializeAuth]);
 
     // Se envuelve logout en useCallback para que su referencia sea estable
     const logout = useCallback(() => {
@@ -84,7 +80,7 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem("user", JSON.stringify(userProfile));
             setUser(userProfile);
-             
+            
             api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
             navigate("/");
         } catch (error) {

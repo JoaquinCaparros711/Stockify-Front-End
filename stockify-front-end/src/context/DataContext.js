@@ -28,7 +28,7 @@ export const DataProvider = ({ children }) => {
     
     const addProduct = async (productData) => {
         try {
-            const response = await api.post('/control/model/product/', productData);
+            await api.post('/control/model/product/', productData);
             await fetchProducts(); // Volvemos a pedir los datos para tener la lista actualizada
         } catch (error) {
             console.error("Error al crear el producto:", error.response?.data);
