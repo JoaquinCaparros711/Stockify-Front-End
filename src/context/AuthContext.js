@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect, useCallback } from "react"; // <-- CAMBIO: Se importa useCallback
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { jwtDecode } from "jwt-decode";
@@ -41,6 +41,17 @@ export const AuthProvider = ({ children }) => {
 
         initializeAuth();
     }, []);
+    
+    // <-- CAMBIO: La función 'logout' se envuelve en useCallback para estabilizarla.
+    // Solo se volverá a crear si la dependencia 'navigate' cambia (lo cual es muy raro).
+    const logout = useCallback(() => {
+        setUser(null);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        delete api.defaults.headers.common["Authorization"];
+        navigate("/login");
+    }, [navigate]);
 
     // Escucha el evento 'logout' disparado por el interceptor de la API
     useEffect(() => {
@@ -52,7 +63,7 @@ export const AuthProvider = ({ children }) => {
         return () => {
             window.removeEventListener('logout', handleLogoutEvent);
         };
-    }, []); // El array vacío asegura que este efecto se ejecute solo una vez
+    }, [logout]); // <-- CAMBIO: Se añade 'logout' al array de dependencias para cumplir la regla de hooks.
 
     const login = async (data) => {
         try {
@@ -115,17 +126,8 @@ export const AuthProvider = ({ children }) => {
                     })
                     .join("\n");
             }
-            alert(errorMessage); // Puedes cambiar esto por una notificación bonita si quieres
+            alert(errorMessage);
         }
-    };
-
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user"); // Limpiamos la key consistente
-        delete api.defaults.headers.common["Authorization"];
-        navigate("/login");
     };
 
     const updateProfile = async (userId, profileData) => {
