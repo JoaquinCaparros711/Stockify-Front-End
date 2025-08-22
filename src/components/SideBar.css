@@ -1,0 +1,316 @@
+/* --- Variables de Diseño con TUS Colores de Marca --- */
+:root {
+    /* Variables para el MODAL movidas aquí para que sean globales */
+    --modal-bg: #2b3d4e;
+    --modal-text: #ffffff;
+    --modal-input-bg: #2c3e50;
+    --modal-border: rgba(255, 255, 255, 0.1);
+    --button-primary-bg: #3498db;
+    --button-secondary-bg: #566573;
+    --button-danger-bg: #e74c3c;
+    --link-active-bg: #3498db;
+    --link-active-text: #2c3e50;
+}
+
+.sidebar-apple {
+    /* Variables específicas del Sidebar */
+    --sidebar-bg: #34495e;
+    --text-primary: #ffffff;
+    --text-secondary: #95a5a6;
+    --text-logo: #ec9639;
+    --link-hover-bg: rgba(255, 255, 255, 0.1);
+    
+    width: 280px;
+    background-color: var(--sidebar-bg);
+    color: var(--text-primary);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--modal-border);
+}
+
+/* Encabezado */
+.sidebar-header-apple {
+    height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar-logo-apple {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-logo);
+}
+
+/* Navegación */
+.sidebar-nav-apple {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 1rem;
+}
+
+.sidebar-nav-apple ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-heading-apple {
+    padding: 1.5rem 0.75rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.nav-link-apple {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    margin-bottom: 0.25rem;
+}
+
+.nav-link-apple:hover {
+    background-color: var(--link-hover-bg);
+    color: #ffffff; 
+}
+
+.nav-link-apple.active {
+    background-color: var(--link-active-bg);
+    color: var(--link-active-text);
+}
+
+.nav-link-apple.active .nav-text-apple {
+    font-weight: 700; 
+}
+
+.nav-icon-apple {
+    margin-right: 1rem;
+    font-size: 1.3rem;
+    width: 24px;
+    text-align: center;
+}
+
+.nav-text-apple {
+    font-weight: 500;
+}
+
+/* Footer (Perfil de Usuario) */
+.sidebar-footer-apple {
+    padding: 1rem;
+    border-top: 1px solid var(--modal-border);
+}
+
+.user-profile-toggle {
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+.user-profile-toggle:hover {
+    background-color: var(--link-hover-bg);
+}
+.user-profile-toggle::after {
+    display: inline-block;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+}
+
+.user-info-apple {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar-apple {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-name-apple {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Menú Desplegable */
+.dropdown-menu-apple {
+    background-color: var(--modal-bg) !important;
+    border: 1px solid var(--modal-border) !important;
+    border-radius: 10px !important;
+    padding: 0.5rem !important;
+    width: calc(100% - 2rem) !important;
+    margin: 0 1rem !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.dropdown-menu-apple .dropdown-item {
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-menu-apple .dropdown-item:hover {
+    background-color: var(--link-active-bg);
+    color: var(--link-active-text);
+}
+.dropdown-menu-apple .dropdown-item-danger {
+    color: var(--button-danger-bg) !important;
+}
+.dropdown-menu-apple .dropdown-item-danger:hover {
+    background-color: var(--button-danger-bg);
+    color: white !important;
+}
+
+/* --- MODALES (AHORA CON TEMA CLARO PARA CONSISTENCIA) --- */
+.apple-modal-dark .modal-content {
+    background-color: #ffffff;
+    color: #142331;
+    border-radius: 1.25rem !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.apple-modal-dark .modal-header {
+    border-bottom: 1px solid #e5e5e5 !important;
+    padding: 1.5rem;
+}
+
+.apple-modal-dark .modal-title,
+.apple-modal-dark .modal-title-apple {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #142331;
+}
+
+.apple-modal-dark .modal-body {
+    padding: 1.5rem;
+    color: #142331;
+}
+
+.apple-modal-dark .form-label {
+    font-weight: 500;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.apple-modal-dark .form-control,
+.apple-modal-dark .form-select {
+    border-radius: 0.75rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: #142331; /* Color de texto para inputs */
+    transition: all 0.2s ease-in-out;
+}
+
+.apple-modal-dark .form-control:focus,
+.apple-modal-dark .form-select:focus {
+    background-color: #ffffff;
+    border-color: var(--button-primary-bg);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+}
+
+.apple-modal-dark .modal-footer {
+    border-top: 1px solid #e5e5e5 !important;
+    padding: 1rem 1.5rem;
+}
+
+.apple-modal-dark .btn-close {
+    filter: none; /* Resetea el filtro para que se vea bien en fondo claro */
+}
+
+/* Botones del modal */
+.apple-modal-dark .apple-button-primary,
+.apple-modal-dark .btn-primary {
+    background-color: var(--button-primary-bg);
+    border-color: var(--button-primary-bg);
+    border-radius: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+}
+
+.apple-modal-dark .apple-button-secondary,
+.apple-modal-dark .btn-secondary {
+    background-color: #e9ecef;
+    color: #343a40;
+    border-color: #e9ecef;
+    border-radius: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+}
+
+.apple-modal-dark .apple-button-danger,
+.apple-modal-dark .btn-danger {
+    background-color: var(--button-danger-bg);
+    border-color: var(--button-danger-bg);
+    border-radius: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+}
+
+/* Lógica para Móvil (sin cambios) */
+.sidebar-toggle-btn-apple {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background: rgba(50, 50, 50, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    line-height: 1;
+}
+
+.sidebar-backdrop-apple {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+@media (max-width: 992px) {
+  .sidebar-apple {
+    transform: translateX(-100%);
+  }
+  .sidebar-apple.open {
+    transform: translateX(0);
+  }
+  .sidebar-toggle-btn-apple {
+    display: block;
+  }
+  .sidebar-apple.open ~ .sidebar-backdrop-apple {
+    display: block;
+  }
+}

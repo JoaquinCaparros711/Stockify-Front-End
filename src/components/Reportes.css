@@ -1,0 +1,80 @@
+/* --- ANIMACIÓN DE ENTRADA --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reports-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- ESTILOS DE CABECERA (consistente con otras páginas) --- */
+.page-header {
+    margin-bottom: 2.5rem;
+}
+.page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #142331;
+}
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+
+/* --- TARJETAS --- */
+.reports-container .card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.reports-container .card-header {
+    background-color: white;
+    padding-top: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* --- FORMULARIO DE FILTROS --- */
+.reports-container .form-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.reports-container .form-control {
+    border-radius: 0.5rem;
+}
+
+.reports-container .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.6rem 1.25rem;
+}
+
+
+/* --- TABLA DE REPORTES --- */
+.reports-container .table thead th {
+    border: none !important;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 1rem 1.5rem;
+}
+
+.reports-container .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.reports-container .table tbody td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+}
