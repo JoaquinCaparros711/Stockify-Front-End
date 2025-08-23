@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Button, Card, Table, Badge, Form, Modal, Spinner } from 'react-bootstrap';
-import { BsPencilSquare, BsPlus, BsXCircleFill, BsCheckCircleFill } from 'react-icons/bs';
+import { BsPencilSquare, BsPlus, BsXCircleFill, BsCheckCircleFill, BsSearch, BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import './Stock.css'; 
 
-// --- Componentes de Notificación (sin cambios) ---
 const AppleStyleAlert = ({ message, onClose }) => {
     if (!message) return null;
     return (
@@ -34,9 +33,7 @@ const AppleStyleSuccessToast = ({ message, onClose }) => {
     );
 };
 
-
 const Stock = () => {
-    // --- CONTEXTOS Y ESTADOS (sin cambios) ---
     const { branchStock, products, branches, loading, addBranchStock, adjustStock } = useData();
     const { user } = useAuth();
     
@@ -47,8 +44,10 @@ const Stock = () => {
     const [formData, setFormData] = useState({});
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
-    // --- EFECTOS (sin cambios) ---
     useEffect(() => {
         if (branches.length > 0 && user) {
             let initialBranchName = '';
@@ -74,7 +73,6 @@ const Stock = () => {
         setAlertMessage('');
     }, [editingStock, showAddModal, showAdjustModal, selectedBranch, branches]);
 
-    // --- MANEJADORES DE EVENTOS ---
     const handleSelectBranch = (e) => setSelectedBranch(e.target.value);
     const handleShowAdjustModal = (stockItem) => { setEditingStock(stockItem); setShowAdjustModal(true); };
     const handleCloseAdjustModal = () => setShowAdjustModal(false);
@@ -83,27 +81,20 @@ const Stock = () => {
     
     const handleFormChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-        if (alertMessage) {
-            setAlertMessage('');
-        }
+        if (alertMessage) setAlertMessage('');
     };
 
-    // --- FUNCIÓN DE AJUSTE MODIFICADA ---
     const handleAdjustStockSubmit = async () => {
         const newStock = parseInt(formData.current_stock);
-
-        // Validación: el stock no puede ser negativo.
         if (isNaN(newStock) || newStock < 0) {
             setAlertMessage("La cantidad de stock no puede ser un número negativo.");
             return;
         }
-        
         try {
             await adjustStock(editingStock.id, { current_stock: formData.current_stock });
             setSuccessMessage('¡Stock ajustado con éxito!');
             handleCloseAdjustModal();
-        } catch (error) { 
-            console.log("El ajuste de stock falló."); 
+        } catch {
             setAlertMessage('Hubo un error al ajustar el stock.');
         }
     };
@@ -116,9 +107,7 @@ const Stock = () => {
         if (isNaN(quantity) || quantity <= 0) {
             return setAlertMessage('La cantidad a ingresar debe ser un número mayor a cero.');
         }
-        const productExistsInBranch = branchStock.some(
-            item => item.product === product && item.branch === branch
-        );
+        const productExistsInBranch = branchStock.some(item => item.product === product && item.branch === branch);
         if (productExistsInBranch) {
             return setAlertMessage('Este producto ya está registrado en la sucursal seleccionada.');
         }
@@ -132,10 +121,9 @@ const Stock = () => {
         }
     };
 
-    // --- DATOS MEMOIZADOS (sin cambios) ---
     const filteredStock = useMemo(() => {
         if (loading || !branchStock.length) return [];
-        return branchStock
+        let items = branchStock
             .map(item => ({
                 ...item,
                 productName: products.find(p => p.id === item.product)?.name || 'N/A',
@@ -143,13 +131,24 @@ const Stock = () => {
                 branchName: branches.find(b => b.id === item.branch)?.name || 'N/A',
             }))
             .filter(item => item.branchName === selectedBranch);
-    }, [branchStock, products, branches, selectedBranch, loading]);
+
+        if (searchTerm) {
+            const lowerTerm = searchTerm.toLowerCase();
+            items = items.filter(item =>
+                item.productName.toLowerCase().includes(lowerTerm) ||
+                item.category.toLowerCase().includes(lowerTerm)
+            );
+        }
+        return items;
+    }, [branchStock, products, branches, selectedBranch, loading, searchTerm]);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedStock = filteredStock.slice(startIndex, startIndex + itemsPerPage);
 
     if (loading) {
         return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
     }
 
-    // --- RENDERIZADO DEL COMPONENTE ---
     return (
         <Container fluid className="stock-container">
             <AppleStyleSuccessToast message={successMessage} onClose={() => setSuccessMessage('')} />
@@ -169,14 +168,26 @@ const Stock = () => {
 
             <Card className="shadow-sm stock-table-card">
                 <div className="stock-toolbar d-flex flex-wrap justify-content-between align-items-center">
-                    <h5 className="mb-0">Inventario de: <strong>{selectedBranch}</strong></h5>
-                    {user && user.role === 'admin' && (
-                        <Form.Group controlId="branchSelect" className="mt-2 mt-md-0">
-                            <Form.Select value={selectedBranch} onChange={handleSelectBranch}>
+                    <div className="d-flex align-items-center flex-wrap gap-2">
+                        <h5 className="mb-0">Inventario de:</h5>
+                        {user && user.role === 'admin' ? (
+                            <Form.Select value={selectedBranch} onChange={handleSelectBranch} style={{ maxWidth: "200px" }}>
                                 {branches.map(branch => <option key={branch.id} value={branch.name}>{branch.name}</option>)}
                             </Form.Select>
-                        </Form.Group>
-                    )}
+                        ) : (
+                            <strong>{selectedBranch}</strong>
+                        )}
+                    </div>
+                    <div className="search-wrapper">
+                        <BsSearch className="search-icon" />
+                        <Form.Control
+                            type="text"
+                            placeholder="Buscar por producto o categoría..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                        />
+                    </div>
                 </div>
                 
                 <Table responsive className="stock-table">
@@ -189,15 +200,15 @@ const Stock = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredStock.length > 0 ? filteredStock.map((item) => (
+                        {paginatedStock.length > 0 ? paginatedStock.map((item) => (
                             <tr key={item.id}>
-                                <td data-label="Producto" className="fw-bold">{item.productName}</td>
-                                <td data-label="Categoría">{item.category}</td>
-                                <td data-label="Stock Actual" className="text-center">
+                                <td className="fw-bold">{item.productName}</td>
+                                <td>{item.category}</td>
+                                <td className="text-center">
                                     <Badge bg={item.current_stock > 10 ? 'primary-light' : 'warning-light'} text={item.current_stock > 10 ? 'primary' : 'warning'} pill className="p-2 fs-6">{item.current_stock}</Badge>
                                 </td>
                                 {user && user.role === 'admin' && (
-                                    <td data-label="Acciones" className="text-end">
+                                    <td className="text-end">
                                         <Button variant="light" className="btn-adjust border" size="sm" onClick={() => handleShowAdjustModal(item)}>
                                             <BsPencilSquare className="me-1" /> Ajustar
                                         </Button>
@@ -207,20 +218,36 @@ const Stock = () => {
                         )) : ( <tr><td colSpan={user && user.role === 'admin' ? 4 : 3} className="text-center text-muted py-5">No hay productos en esta sucursal.</td></tr> )}
                     </tbody>
                 </Table>
+
+                <div className="d-flex justify-content-between align-items-center p-3">
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(prev => prev - 1)}
+                    >
+                        <BsChevronLeft /> Anterior
+                    </Button>
+                    <span>Página {currentPage} de {Math.ceil(filteredStock.length / itemsPerPage)}</span>
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
+                        disabled={startIndex + itemsPerPage >= filteredStock.length}
+                        onClick={() => setCurrentPage(prev => prev + 1)}
+                    >
+                        Siguiente <BsChevronRight />
+                    </Button>
+                </div>
             </Card>
 
-            {/* --- MODAL DE AJUSTE MODIFICADO --- */}
             <Modal show={showAdjustModal} onHide={handleCloseAdjustModal} centered>
                 <Modal.Header closeButton><Modal.Title>Ajustar Stock</Modal.Title></Modal.Header>
                 <Modal.Body>
-                    {/* Añadimos la alerta de error aquí */}
                     <AppleStyleAlert message={alertMessage} onClose={() => setAlertMessage('')} />
-                    
                     <div className="adjust-stock-info">
                         <strong>Producto:</strong> {editingStock?.productName}<br/>
                         <strong>Stock Actual:</strong> {editingStock?.current_stock}
                     </div>
-
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Nueva Cantidad de Stock</Form.Label>
