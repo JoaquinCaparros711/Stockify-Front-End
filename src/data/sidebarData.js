@@ -4,7 +4,7 @@ import { MdMoveUp } from "react-icons/md";
 import { AiOutlineStock } from "react-icons/ai";
 import { MdOutlineAddHomeWork } from "react-icons/md";
 import { HiOutlineUserAdd } from "react-icons/hi";
-import { BsBoxArrowLeft, BsBuilding } from "react-icons/bs";
+import { BsBoxArrowLeft } from "react-icons/bs";
 import { BsFileEarmarkText } from 'react-icons/bs';
 
 
@@ -16,7 +16,6 @@ export const sidebarItems = [
   { path: '/sucursales', icon: <MdOutlineAddHomeWork />, text: 'Sucursales' },
   { path: '/usuarios', icon: <HiOutlineUserAdd />, text: 'Usuarios' },
   { path: '/reportes', icon: <BsFileEarmarkText />, adminOnly: true, text: 'Reportes' },
-  { path: '/empresa', icon: <BsBuilding />, adminOnly: true, text: 'Empresa' },
 ];
 
 export const logoutItem = {
