@@ -182,7 +182,7 @@ const Stock = () => {
                         <BsSearch className="search-icon" />
                         <Form.Control
                             type="text"
-                            placeholder="Buscar por producto o categoría..."
+                            placeholder="Buscar"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="search-input"
