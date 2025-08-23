@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Spinner } from 'react-bootstrap';
-// --- 1. Importamos los nuevos íconos ---
-import { BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, BsXCircleFill, BsCheckCircleFill, BsTrophyFill, BsAwardFill, BsArchiveFill } from 'react-icons/bs';
+import { 
+    BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, 
+    BsXCircleFill, BsCheckCircleFill, BsTrophyFill, BsAwardFill, 
+    BsArrowLeftCircleFill, BsArrowRightCircleFill 
+} from 'react-icons/bs';
 import VentasChart from '../../components/VentasChart';
 import MovimientosChart from '../../components/MovementChart';
 import { useData } from '../../context/DataContext';
@@ -53,12 +56,15 @@ const AppleStyleSuccessToast = ({ message, onClose }) => {
 const Home = () => {
     const { products, branchStock, movements, branches, users, loading, addMovement } = useData();
     const { user } = useAuth();
-    
+
     const [showSaleModal, setShowSaleModal] = useState(false);
     const [saleData, setSaleData] = useState({ product: '', quantity: 1, branch: '', description: '' });
-    
+
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    
+    const [lowStockPage, setLowStockPage] = useState(0);
+    const ITEMS_PER_PAGE = 5;
 
     const handleShowSaleModal = () => {
         let initialBranchId = '';
@@ -71,7 +77,7 @@ const Home = () => {
         setAlertMessage('');
         setShowSaleModal(true);
     };
-    
+
     const handleCloseSaleModal = () => {
         setShowSaleModal(false);
         setAlertMessage('');
@@ -99,7 +105,7 @@ const Home = () => {
             setAlertMessage("La cantidad debe ser un número mayor a cero.");
             return;
         }
-        
+
         const productId = parseInt(saleData.product);
         const branchId = parseInt(saleData.branch);
 
@@ -132,16 +138,15 @@ const Home = () => {
     };
 
     const dashboardData = useMemo(() => {
-        // --- 2. Añadimos los nuevos valores por defecto ---
         const initialData = { 
             totalProducts: 0, lowStockCount: 0, monthlySales: 0, totalUsersInScope: 0, lowStockProducts: [],
-            bestSeller: 'N/A', worstSeller: 'N/A', topBranch: 'N/A'
+            bestSeller: 'Sin datos', topBranch: 'Sin datos'
         };
 
         if (loading || !products.length || !branchStock.length || !movements.length || !users.length || !user || !branches.length) {
             return initialData;
         }
-        
+
         const lowStockItems = branchStock.filter(p => p.current_stock <= 10)
             .map(stockItem => {
                 const productDetails = products.find(p => p.id === stockItem.product);
@@ -152,7 +157,7 @@ const Home = () => {
                     branchName: branchDetails?.name || 'N/A'
                 };
             });
-            
+
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -163,7 +168,7 @@ const Home = () => {
                 movementDate.getMonth() === currentMonth &&
                 movementDate.getFullYear() === currentYear;
         });
-        
+
         const salesValue = monthlySalesMovements.reduce((sum, mov) => {
             const price = parseFloat(mov.price_at_movement) || 0;
             return sum + (price * mov.quantity);
@@ -177,13 +182,10 @@ const Home = () => {
             totalUsersInScope = usersInScope.length;
         }
 
-        // --- 3. Lógica para las nuevas estadísticas del Admin ---
-        let bestSeller = 'N/A';
-        let worstSeller = 'N/A';
-        let topBranch = 'N/A';
+        let bestSeller = 'Sin ventas este mes';
+        let topBranch = 'Sin ventas este mes';
 
         if (user.role === 'admin' && monthlySalesMovements.length > 0) {
-            // Producto Estrella
             const salesByProduct = new Map();
             monthlySalesMovements.forEach(mov => {
                 const currentQty = salesByProduct.get(mov.product_name) || 0;
@@ -193,16 +195,6 @@ const Home = () => {
                 bestSeller = [...salesByProduct.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
             }
 
-            // Producto "Ancla"
-            const soldProductNames = new Set(salesByProduct.keys());
-            const unsoldProducts = products.filter(p => !soldProductNames.has(p.name));
-            if (unsoldProducts.length > 0) {
-                worstSeller = unsoldProducts[0].name;
-            } else {
-                worstSeller = "¡Todo se vendió!";
-            }
-
-            // Sucursal con más ventas
             const salesByBranch = new Map();
             monthlySalesMovements.forEach(mov => {
                 const price = parseFloat(mov.price_at_movement) || 0;
@@ -222,7 +214,6 @@ const Home = () => {
             totalUsersInScope: totalUsersInScope,
             lowStockProducts: lowStockItems,
             bestSeller,
-            worstSeller,
             topBranch,
         };
     }, [products, branchStock, movements, users, branches, loading, user]);
@@ -230,13 +221,28 @@ const Home = () => {
     const availableProductsForSale = useMemo(() => {
         if (!saleData.branch) return [];
         const stockInSelectedBranch = branchStock.filter(
-            item => item.branch === saleData.branch && item.current_stock > 0
+            item => item.branch === parseInt(saleData.branch) && item.current_stock > 0
         );
         const availableProductIds = stockInSelectedBranch.map(item => item.product);
         return products.filter(p => availableProductIds.includes(p.id));
     }, [saleData.branch, branchStock, products]);
 
     const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
+
+    const totalLowStockPages = Math.ceil(dashboardData.lowStockProducts.length / ITEMS_PER_PAGE);
+    const paginatedLowStockProducts = dashboardData.lowStockProducts.slice(
+        lowStockPage * ITEMS_PER_PAGE,
+        (lowStockPage + 1) * ITEMS_PER_PAGE
+    );
+
+    const handleNextPage = () => {
+        setLowStockPage(prev => Math.min(prev + 1, totalLowStockPages - 1));
+    };
+
+    const handlePrevPage = () => {
+        setLowStockPage(prev => Math.max(prev - 1, 0));
+    };
+
 
     if (loading) {
         return <Container className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" variant="primary" /></Container>;
@@ -268,10 +274,9 @@ const Home = () => {
                 <Col md={6} lg={3} className="mb-4"><KpiCard title={user.role === 'admin' ? "Total de Usuarios" : "Equipo de la Sucursal"} value={dashboardData.totalUsersInScope} icon={<BsPeople size={32} />} color="info" /></Col>
             </Row>
             
-            {/* --- 4. Nueva Fila de KPIs solo para Admins --- */}
             {user.role === 'admin' && (
                 <Row>
-                    <Col md={6} lg={4} className="mb-4">
+                    <Col md={6} lg={6} className="mb-4">
                         <KpiCard 
                             title="Producto Estrella (Mes)" 
                             value={dashboardData.bestSeller} 
@@ -279,20 +284,12 @@ const Home = () => {
                             color="warning"
                         />
                     </Col>
-                    <Col md={6} lg={4} className="mb-4">
+                    <Col md={6} lg={6} className="mb-4">
                         <KpiCard 
                             title="Sucursal con Más Ventas (Mes)" 
                             value={dashboardData.topBranch} 
                             icon={<BsAwardFill size={32} />}
                             color="info" 
-                        />
-                    </Col>
-                    <Col md={6} lg={4} className="mb-4">
-                        <KpiCard 
-                            title="Producto sin Ventas (Mes)" 
-                            value={dashboardData.worstSeller} 
-                            icon={<BsArchiveFill size={32} />}
-                            color="secondary" 
                         />
                     </Col>
                 </Row>
@@ -317,26 +314,45 @@ const Home = () => {
                 </Col>
                 <Col xl={4} className="mb-4">
                     <Card className="shadow-sm h-100 low-stock-card">
-                        <Card.Header as="h5" className="bg-transparent border-0 pt-4 px-4">Productos con Bajo Stock</Card.Header>
+                        <Card.Header as="h5" className="bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                            Productos con Bajo Stock
+                            {totalLowStockPages > 1 && (
+                                <div className="pagination-controls">
+                                    <Button variant="link" onClick={handlePrevPage} disabled={lowStockPage === 0} className="p-0 me-2">
+                                        <BsArrowLeftCircleFill size={20} />
+                                    </Button>
+                                    <span className="page-indicator">{lowStockPage + 1} / {totalLowStockPages}</span>
+                                    <Button variant="link" onClick={handleNextPage} disabled={lowStockPage === totalLowStockPages - 1} className="p-0 ms-2">
+                                        <BsArrowRightCircleFill size={20} />
+                                    </Button>
+                                </div>
+                            )}
+                        </Card.Header>
                         <Card.Body className="pt-0 px-4">
                             <Table responsive className="low-stock-table">
                                 <thead>
                                     <tr><th>Producto</th><th className="text-end">Stock</th></tr>
                                 </thead>
                                 <tbody>
-                                    {dashboardData.lowStockProducts.map(product => (
-                                        <tr key={`${product.id}-${product.branch}`}>
-                                            <td>
-                                                <div>{product.productName}</div>
-                                                <small className="text-muted">{product.branchName}</small>
-                                            </td>
-                                            <td className="text-end">
-                                                <Badge bg="danger-light" text="danger" pill className="p-2">
-                                                    {product.current_stock}
-                                                </Badge>
-                                            </td>
+                                    {paginatedLowStockProducts.length > 0 ? (
+                                        paginatedLowStockProducts.map(product => (
+                                            <tr key={`${product.id}-${product.branch}`}>
+                                                <td>
+                                                    <div>{product.productName}</div>
+                                                    <small className="text-muted">{product.branchName}</small>
+                                                </td>
+                                                <td className="text-end">
+                                                    <Badge bg="danger-light" text="danger" pill className="p-2">
+                                                        {product.current_stock}
+                                                    </Badge>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="2" className="text-center text-muted py-3">No hay productos con bajo stock.</td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </Table>
                         </Card.Body>
