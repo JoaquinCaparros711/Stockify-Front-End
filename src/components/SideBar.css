@@ -1,6 +1,5 @@
 /* --- Variables de Diseño con TUS Colores de Marca --- */
 :root {
-    /* Variables para el MODAL movidas aquí para que sean globales */
     --modal-bg: #2b3d4e;
     --modal-text: #ffffff;
     --modal-input-bg: #2c3e50;
@@ -13,7 +12,6 @@
 }
 
 .sidebar-apple {
-    /* Variables específicas del Sidebar */
     --sidebar-bg: #34495e;
     --text-primary: #ffffff;
     --text-secondary: #95a5a6;
@@ -145,11 +143,26 @@
     object-fit: cover;
 }
 
+/* 👇 FIX para nombres largos */
 .user-name-apple {
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 120px; /* Ajustá este valor según el diseño */
+    display: inline-block;
+    vertical-align: middle;
+}
+.user-name-apple:hover {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    position: absolute;
+    z-index: 2000;
 }
 
 /* Menú Desplegable */
@@ -182,7 +195,7 @@
     color: white !important;
 }
 
-/* --- MODALES (AHORA CON TEMA CLARO PARA CONSISTENCIA) --- */
+/* --- MODALES --- */
 .apple-modal-dark .modal-content {
     background-color: #ffffff;
     color: #142331;
@@ -270,7 +283,7 @@
     font-weight: 600;
 }
 
-/* Lógica para Móvil (sin cambios) */
+/* Lógica para Móvil */
 .sidebar-toggle-btn-apple {
     display: none;
     position: fixed;

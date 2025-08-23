@@ -173,7 +173,7 @@ const SideBar = () => {
                   alt="Avatar" 
                   className="user-avatar-apple"
                 />
-                <span className="user-name-apple">{displayName}</span>
+                <span className="user-name-apple" title={displayName}>{displayName}</span>
               </div>
             </Dropdown.Toggle>
 
