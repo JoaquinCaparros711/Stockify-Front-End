@@ -148,7 +148,6 @@
 .user-name-apple {
     font-weight: 500;
     white-space: nowrap;
-    max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
