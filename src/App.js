@@ -19,6 +19,7 @@ import Users from './components/pages/Users';
 import { DataProvider } from './context/DataContext';
 import PublicRoute from './components/PublicRoute';
 import Reportes from './components/Reportes';
+import CompanyProfile from './components/pages/CompanyProfile';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
               <Route path="sucursales" element={<Branchs />} />
               <Route path="usuarios" element={<Users />} />
               <Route path="reportes" element={<Reportes />} />
+              <Route path="empresa" element={<CompanyProfile />} />
             </Route>
           </Routes>
         </DataProvider>
