@@ -178,26 +178,27 @@
 /* --- Estilos para el Filtro de Fecha --- */
 .date-filter-wrapper {
     position: relative;
-    display: inline-block;
-}
-
-.date-filter-wrapper .form-control {
-    padding-left: 2.5rem; /* Espacio para el ícono */
-    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    max-width: 220px; 
 }
 
 .date-filter-icon {
     position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
+    left: 12px;
     color: #6c757d;
-    pointer-events: none; /* Para poder hacer clic en el input a través del ícono */
+    pointer-events: none; 
+}
+
+.date-filter-wrapper .form-control {
+    padding-left: 38px !important;   
+    padding-right: 35px !important;  
+    border-radius: 0.5rem;
 }
 
 .clear-date-btn {
     position: absolute;
-    right: 0.5rem;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -205,12 +206,10 @@
     font-size: 1.5rem;
     color: #6c757d;
     cursor: pointer;
+    padding: 0 5px;
     line-height: 1;
-    padding: 0 0.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
+
 .clear-date-btn:hover {
     color: #343a40;
 }

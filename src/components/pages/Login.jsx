@@ -79,7 +79,7 @@ const Login = () => {
             >
                 <img src={Logo} alt="Logo de Stockify" />
                 <h2 className="auth-title">¿No tenés cuenta?</h2>
-                <p className="auth-subtitle">Creá una cuenta nueva para poder utilizar el programa de stock. Probalo GRATIS.</p>
+                <p className="auth-subtitle">Creá una cuenta nueva para poder utilizar <b>Stockify</b> Probalo <b>GRATIS</b>.</p>
                 <Link to="/register" className="btn btn-outline-light">REGISTRARSE</Link>
             </motion.div>
 

@@ -243,7 +243,7 @@ const Register = () => {
             >
                 <img src={Logo} alt="Logo de Stockify" />
                 <h2 className="auth-title">¿Ya tenés cuenta?</h2>
-                <p className="auth-subtitle">Si ya te has registrado, inicia sesión con tus datos.</p>
+                <p className="auth-subtitle">Inicia sesión con tus datos.</p>
                 <Link to="/login" className="btn btn-outline-light">
                     INICIAR SESIÓN
                 </Link>
