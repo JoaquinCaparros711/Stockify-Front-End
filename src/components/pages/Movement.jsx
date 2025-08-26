@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Button, Card, Dropdown, Table, Modal, Form, Spinner, Pagination } from 'react-bootstrap';
-import Select from 'react-select'; // <-- 1. IMPORTAMOS REACT-SELECT
+import Select from 'react-select'; 
 import { BsArrowDown, BsArrowUp, BsPlus, BsXCircleFill, BsCheckCircleFill, BsCalendarEvent } from 'react-icons/bs';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -63,6 +63,14 @@ const Movements = () => {
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
+    // --- 1. DEFINIMOS LOS ESTILOS PERSONALIZADOS PARA EL SELECTOR ---
+    const customSelectStyles = {
+        menu: (provided) => ({
+            ...provided,
+            zIndex: 9999 // Un valor alto para asegurar que se muestre sobre el modal
+        })
+    };
+
     const handleCloseModal = () => {
         setShowModal(false);
         setAlertMessage('');
@@ -86,19 +94,16 @@ const Movements = () => {
 
     const handleFormChange = (e) => {
         const { name, value } = e.target;
-        // Si cambia el tipo de movimiento o sucursal, reseteamos el producto
         if (name === 'movement_type' || name === 'branch') {
              setNewMovementData(prev => ({ ...prev, product: '', [name]: value }));
         } else {
              setNewMovementData(prev => ({ ...prev, [name]: value }));
         }
-
         if (alertMessage) {
             setAlertMessage('');
         }
     };
 
-    // --- 2. NUEVO HANDLER PARA REACT-SELECT ---
     const handleProductSelect = (selectedOption) => {
         setNewMovementData(prev => ({...prev, product: selectedOption ? selectedOption.value : ''}));
     };
@@ -126,12 +131,9 @@ const Movements = () => {
         const movementType = newMovementData.movement_type;
         const branchId = newMovementData.branch;
 
-        // Para admins o movimientos de entrada, mostramos todos los productos.
         if (user.role === 'admin' || movementType === 'incoming') {
             return products;
         }
-
-        // Para empleados en movimientos de salida, filtramos por stock en su sucursal.
         if (user.role === 'employee' && movementType === 'outgoing') {
             if (!branchId) return [];
             const productIdsInBranch = new Set(
@@ -141,11 +143,9 @@ const Movements = () => {
             );
             return products.filter(p => productIdsInBranch.has(p.id));
         }
-
-        return []; // Por defecto, no mostrar productos si no se cumplen las condiciones
+        return [];
     }, [user, products, branchStock, newMovementData.movement_type, newMovementData.branch]);
     
-    // --- 3. ADAPTAMOS LOS PRODUCTOS PARA REACT-SELECT ---
     const productOptions = useMemo(() => {
         return availableProducts.map(p => ({
             value: p.id,
@@ -311,7 +311,6 @@ const Movements = () => {
                             </Form.Select>
                         </Form.Group>
 
-                        {/* --- 4. REEMPLAZAMOS EL SELECTOR ANTIGUO POR EL NUEVO --- */}
                         <Form.Group className="mb-3">
                             <Form.Label>Producto</Form.Label>
                             <Select
@@ -322,6 +321,8 @@ const Movements = () => {
                                 isClearable
                                 placeholder="Buscar y seleccionar un producto..."
                                 noOptionsMessage={() => "No hay productos disponibles"}
+                                // --- 2. APLICAMOS LOS ESTILOS AL COMPONENTE ---
+                                styles={customSelectStyles}
                             />
                         </Form.Group>
 
