@@ -214,11 +214,13 @@
     color: #343a40;
 }
 
-/* --- Estilos Mejorados para la Paginación --- */
+/* --- Estilos Mejorados para la Paginación (CON COLORES DE LA MARCA) --- */
 .pagination {
+    /* Variables de Bootstrap para colores consistentes */
     --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
-    --bs-pagination-disabled-bg: #e9ecef;
+    --bs-pagination-disabled-bg: #f8f9fa;
     --bs-pagination-disabled-border-color: #dee2e6;
+    --bs-pagination-disabled-color: #adb5bd;
     gap: 0.5rem; /* Espacio entre los botones */
 }
 
@@ -229,16 +231,18 @@
     color: #6c757d;
     font-weight: 500;
     padding: 0.5rem 1rem;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.pagination .page-item .page-link:hover {
-    background-color: #dee2e6;
+/* ESTADO HOVER: Cambia a color primario */
+.pagination .page-item:not(.active) .page-link:hover {
+    background-color: #3498db; /* Tu color azul primario */
+    color: white;
 }
 
-/* Estilo para el indicador de página "Página X de Y" */
+/* ESTADO ACTIVO: Usa el color primario también */
 .pagination .page-item.active .page-link {
-    background-color: #34495e; /* Un color oscuro y neutro */
+    background-color: #3498db; /* Tu color azul primario */
     color: white;
     font-weight: 600;
 }
