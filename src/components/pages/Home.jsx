@@ -63,6 +63,9 @@ const Home = () => {
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     
+    // --- ESTADO PARA EL BUSCADOR DE PRODUCTOS ---
+    const [productSearchTerm, setProductSearchTerm] = useState('');
+    
     const [lowStockPage, setLowStockPage] = useState(0);
     const ITEMS_PER_PAGE = 5;
 
@@ -75,12 +78,14 @@ const Home = () => {
         }
         setSaleData({ product: '', quantity: 1, branch: initialBranchId, description: '' });
         setAlertMessage('');
+        setProductSearchTerm(''); // Limpiar buscador al abrir
         setShowSaleModal(true);
     };
 
     const handleCloseSaleModal = () => {
         setShowSaleModal(false);
         setAlertMessage('');
+        setProductSearchTerm(''); // Limpiar buscador al cerrar
     };
 
     const handleSaleFormChange = (e) => {
@@ -218,14 +223,24 @@ const Home = () => {
         };
     }, [products, branchStock, movements, users, branches, loading, user]);
 
+    // --- LÓGICA DE FILTRADO DE PRODUCTOS (ACTUALIZADA) ---
     const availableProductsForSale = useMemo(() => {
         if (!saleData.branch) return [];
+        
         const stockInSelectedBranch = branchStock.filter(
             item => item.branch === parseInt(saleData.branch) && item.current_stock > 0
         );
-        const availableProductIds = stockInSelectedBranch.map(item => item.product);
-        return products.filter(p => availableProductIds.includes(p.id));
-    }, [saleData.branch, branchStock, products]);
+        const availableProductIds = new Set(stockInSelectedBranch.map(item => item.product));
+        let availableProducts = products.filter(p => availableProductIds.has(p.id));
+
+        if (productSearchTerm) {
+            availableProducts = availableProducts.filter(p =>
+                p.name.toLowerCase().includes(productSearchTerm.toLowerCase())
+            );
+        }
+
+        return availableProducts;
+    }, [saleData.branch, branchStock, products, productSearchTerm]);
 
     const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
 
@@ -380,8 +395,17 @@ const Home = () => {
                                 />
                             )}
                         </Form.Group>
+                        
+                        {/* --- FORMULARIO DE PRODUCTO CON BUSCADOR --- */}
                         <Form.Group className="mb-3">
                             <Form.Label>Producto</Form.Label>
+                            <Form.Control
+                                type="text"
+                                placeholder="Buscar producto por nombre..."
+                                className="mb-2"
+                                value={productSearchTerm}
+                                onChange={(e) => setProductSearchTerm(e.target.value)}
+                            />
                             <Form.Select 
                                 name="product" 
                                 value={saleData.product} 
@@ -389,11 +413,12 @@ const Home = () => {
                                 disabled={!saleData.branch}
                             >
                                 <option value="">
-                                    {availableProductsForSale.length > 0 ? "Selecciona un producto..." : "No hay productos en stock"}
+                                    {availableProductsForSale.length > 0 ? "Selecciona un producto..." : "No se encontraron productos"}
                                 </option>
                                 {availableProductsForSale.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </Form.Select>
                         </Form.Group>
+                        
                         <Form.Group className="mb-3">
                             <Form.Label>Cantidad</Form.Label>
                             <Form.Control type="number" name="quantity" value={saleData.quantity} onChange={handleSaleFormChange} min="1" />
