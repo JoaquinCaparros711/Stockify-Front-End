@@ -63,11 +63,10 @@ const Movements = () => {
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
-    // --- 1. DEFINIMOS LOS ESTILOS PERSONALIZADOS PARA EL SELECTOR ---
     const customSelectStyles = {
         menu: (provided) => ({
             ...provided,
-            zIndex: 9999 // Un valor alto para asegurar que se muestre sobre el modal
+            zIndex: 9999
         })
     };
 
@@ -80,6 +79,9 @@ const Movements = () => {
         let initialBranchId = '';
         if (user && user.role === 'employee') {
             initialBranchId = user.branch; 
+        } else if (user.role === 'admin' && branches.length > 0) {
+            // Para el admin, pre-seleccionamos la primera sucursal
+            initialBranchId = branches[0].id;
         }
         setNewMovementData({
             movement_type: '',
@@ -131,6 +133,15 @@ const Movements = () => {
         const movementType = newMovementData.movement_type;
         const branchId = newMovementData.branch;
 
+        if (user.role === 'admin' && movementType === 'outgoing') {
+            if (!branchId) return [];
+            const productIdsInBranch = new Set(
+                branchStock
+                    .filter(stock => stock.branch === branchId && stock.current_stock > 0)
+                    .map(stock => stock.product)
+            );
+            return products.filter(p => productIdsInBranch.has(p.id));
+        }
         if (user.role === 'admin' || movementType === 'incoming') {
             return products;
         }
@@ -312,27 +323,28 @@ const Movements = () => {
                         </Form.Group>
 
                         <Form.Group className="mb-3">
-                            <Form.Label>Producto</Form.Label>
-                            <Select
-                                options={productOptions}
-                                value={productOptions.find(option => option.value === newMovementData.product)}
-                                onChange={handleProductSelect}
-                                isDisabled={!newMovementData.movement_type || !newMovementData.branch}
-                                isClearable
-                                placeholder="Buscar y seleccionar un producto..."
-                                noOptionsMessage={() => "No hay productos disponibles"}
-                                // --- 2. APLICAMOS LOS ESTILOS AL COMPONENTE ---
-                                styles={customSelectStyles}
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
                             <Form.Label>Sucursal</Form.Label>
                             <Form.Select name="branch" value={newMovementData.branch} onChange={handleFormChange} disabled={isEmployee}>
                                 <option value="">Selecciona una sucursal...</option>
                                 {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                             </Form.Select>
                         </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Producto</Form.Label>
+                            <Select
+                                options={productOptions}
+                                value={productOptions.find(option => option.value === newMovementData.product)}
+                                onChange={handleProductSelect}
+                                // --- LÓGICA DE BLOQUEO CORREGIDA ---
+                                isDisabled={isEmployee ? !newMovementData.movement_type : !newMovementData.branch}
+                                isClearable
+                                placeholder="Buscar y seleccionar un producto..."
+                                noOptionsMessage={() => "No hay productos disponibles"}
+                                styles={customSelectStyles}
+                            />
+                        </Form.Group>
+                        
                         <Form.Group className="mb-3">
                             <Form.Label>Cantidad</Form.Label>
                             <Form.Control type="number" name="quantity" value={newMovementData.quantity} onChange={handleFormChange} placeholder="Ingresa la cantidad" />
