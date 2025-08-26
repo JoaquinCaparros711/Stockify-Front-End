@@ -8,7 +8,6 @@ import { useData } from "../context/DataContext"
 import { Dropdown, Modal, Button, Form, Row, Col } from "react-bootstrap"
 import { BsList, BsExclamationTriangleFill, BsPencilFill, BsXCircleFill, BsCheckCircleFill } from "react-icons/bs"
 import "./SideBar.css"
-import logo from '../assets/Logo.png'
 
 // --- Componentes de Notificación ---
 const AppleStyleAlert = ({ message, onClose }) => {
@@ -146,7 +145,6 @@ const SideBar = () => {
       <div className={`sidebar-apple ${isOpen ? "open" : ""}`}>
         <div className="sidebar-header-apple">
           <div className="sidebar-logo-apple">Stockify</div>
-          <img src={logo} alt="" />
         </div>
         <nav className="sidebar-nav-apple">
           <ul>
