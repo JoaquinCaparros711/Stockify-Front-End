@@ -262,7 +262,7 @@ const Home = () => {
 
 
     return (
-        <Container fluid>
+        <Container fluid className='home-container'>
             <AppleStyleSuccessToast 
                 message={successMessage} 
                 onClose={() => setSuccessMessage('')} 

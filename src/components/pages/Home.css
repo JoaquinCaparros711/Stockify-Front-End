@@ -10,6 +10,9 @@
     }
 }
 
+.home-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
 
 /* -- ESTILOS GENERALES DEL DASHBOARD -- */
 .dashboard-header {
