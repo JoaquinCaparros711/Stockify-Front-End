@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Button, Card, Table, Badge, Form, Modal, Spinner } from 'react-bootstrap';
+import Select from 'react-select'; // <-- 1. IMPORTAMOS REACT-SELECT
 import { BsPencilSquare, BsPlus, BsXCircleFill, BsCheckCircleFill, BsSearch, BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import './Stock.css'; 
 
+// --- Componentes (sin cambios) ---
 const AppleStyleAlert = ({ message, onClose }) => {
     if (!message) return null;
     return (
@@ -47,6 +49,14 @@ const Stock = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    
+    // --- 2. ESTILOS PARA EL SELECTOR DENTRO DEL MODAL ---
+    const customSelectStyles = {
+        menu: (provided) => ({
+            ...provided,
+            zIndex: 9999
+        })
+    };
 
     useEffect(() => {
         if (branches.length > 0 && user) {
@@ -79,9 +89,20 @@ const Stock = () => {
     const handleShowAddModal = () => { setEditingStock(null); setShowAddModal(true); };
     const handleCloseAddModal = () => setShowAddModal(false);
     
+    // --- 3. MODIFICAMOS EL HANDLER PARA RESETEAR EL PRODUCTO AL CAMBIAR DE SUCURSAL ---
     const handleFormChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        if (name === 'branch') {
+            setFormData(prev => ({ ...prev, product: '', [name]: value }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
         if (alertMessage) setAlertMessage('');
+    };
+
+    // --- 4. NUEVO HANDLER PARA REACT-SELECT ---
+    const handleProductSelect = (selectedOption) => {
+        setFormData(prev => ({ ...prev, product: selectedOption ? selectedOption.value : '' }));
     };
 
     const handleAdjustStockSubmit = async () => {
@@ -107,10 +128,7 @@ const Stock = () => {
         if (isNaN(quantity) || quantity <= 0) {
             return setAlertMessage('La cantidad a ingresar debe ser un número mayor a cero.');
         }
-        const productExistsInBranch = branchStock.some(item => item.product === product && item.branch === branch);
-        if (productExistsInBranch) {
-            return setAlertMessage('Este producto ya está registrado en la sucursal seleccionada.');
-        }
+        // La validación de duplicados ahora se maneja visualmente al no mostrar el producto en la lista
         try {
             await addBranchStock(formData);
             setSuccessMessage('Producto ingresado al stock con éxito.');
@@ -141,6 +159,30 @@ const Stock = () => {
         }
         return items;
     }, [branchStock, products, branches, selectedBranch, loading, searchTerm]);
+    
+    // --- 5. LÓGICA PARA FILTRAR PRODUCTOS Y ADAPTARLOS A REACT-SELECT ---
+    const productOptions = useMemo(() => {
+        const selectedBranchId = formData.branch;
+        if (!selectedBranchId) {
+            return []; // No mostrar productos si no se ha seleccionado sucursal
+        }
+
+        // Creamos un set con los IDs de productos que ya están en esa sucursal
+        const productIdsInBranch = new Set(
+            branchStock
+                .filter(stock => stock.branch === selectedBranchId)
+                .map(stock => stock.product)
+        );
+
+        // Filtramos la lista general de productos para excluir los que ya están
+        const availableProducts = products.filter(p => !productIdsInBranch.has(p.id));
+
+        // Devolvemos el formato que react-select necesita
+        return availableProducts.map(p => ({
+            value: p.id,
+            label: p.name
+        }));
+    }, [products, branchStock, formData.branch]);
 
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedStock = filteredStock.slice(startIndex, startIndex + itemsPerPage);
@@ -241,6 +283,7 @@ const Stock = () => {
             </Card>
 
             <Modal show={showAdjustModal} onHide={handleCloseAdjustModal} centered>
+                {/* Modal de Ajustar Stock (sin cambios) */}
                 <Modal.Header closeButton><Modal.Title>Ajustar Stock</Modal.Title></Modal.Header>
                 <Modal.Body>
                     <AppleStyleAlert message={alertMessage} onClose={() => setAlertMessage('')} />
@@ -272,19 +315,26 @@ const Stock = () => {
                 <Modal.Body>
                     <AppleStyleAlert message={alertMessage} onClose={() => setAlertMessage('')} />
                     <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Producto</Form.Label>
-                            <Form.Select name="product" value={formData.product || ''} onChange={handleFormChange}>
-                                <option value="">Selecciona un producto...</option>
-                                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </Form.Select>
-                        </Form.Group>
+                        {/* --- 6. REEMPLAZAMOS EL SELECTOR ANTIGUO POR EL NUEVO --- */}
                         <Form.Group className="mb-3">
                             <Form.Label>Sucursal de Destino</Form.Label>
                             <Form.Select name="branch" value={formData.branch || ''} onChange={handleFormChange}>
                                 <option value="">Selecciona una sucursal...</option>
                                 {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                             </Form.Select>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Producto</Form.Label>
+                            <Select
+                                options={productOptions}
+                                value={productOptions.find(option => option.value === formData.product)}
+                                onChange={handleProductSelect}
+                                styles={customSelectStyles}
+                                isDisabled={!formData.branch}
+                                isClearable
+                                placeholder="Buscar producto a ingresar..."
+                                noOptionsMessage={() => "No hay más productos para agregar o no seleccionaste sucursal"}
+                            />
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Cantidad a Ingresar</Form.Label>
