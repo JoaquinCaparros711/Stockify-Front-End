@@ -312,3 +312,45 @@
     padding-left: 2.5rem !important;
     border-radius: 0.75rem !important;
 }
+
+/* --- ESTILOS PARA LA PAGINACIÓN DE LA TABLA DE PRODUCTOS --- */
+
+/* Contenedor de la paginación */
+.products-table-card .d-flex.justify-content-between {
+  /* Añadimos un borde superior para separarlo visualmente de la tabla */
+    border-top: 1px solid #e9ecef; 
+    background-color: #f8f9fa; /* Un fondo muy sutil */
+    padding: 1rem 1.5rem !important;
+
+    /* Redondeamos las esquinas inferiores para que coincida con la tarjeta */
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+}
+
+/* Estilo para el texto "Página X de Y" */
+.products-table-card .d-flex.justify-content-between span {
+    font-weight: 500;
+    color: #6c757d;
+    font-size: 0.9rem;
+    }
+
+/* Estilo para los botones "Anterior" y "Siguiente" */
+.products-table-card .btn-outline-primary {
+    /* Usamos variables de Bootstrap para una personalización limpia */
+    --bs-btn-color: #34495e;
+    --bs-btn-border-color: #dee2e6;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #3498db;
+    --bs-btn-hover-border-color: #3498db;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #2980b9;
+    --bs-btn-active-border-color: #2980b9;
+    --bs-btn-disabled-color: #adb5bd;
+    --bs-btn-disabled-border-color: #dee2e6;
+    --bs-btn-focus-shadow-rgb: 52, 152, 219; /* Color del resplandor de foco */
+
+    font-weight: 500;
+    border-radius: 0.5rem; /* Bordes redondeados */
+    padding: 0.4rem 0.8rem;
+    transition: all 0.2s ease-in-out;
+}
