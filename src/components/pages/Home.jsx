@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Spinner } from 'react-bootstrap';
+import Select from 'react-select'; // Importamos react-select
 import { 
     BsBoxSeam, BsCashCoin, BsPeople, BsArrowDownCircle, BsPlus, 
     BsXCircleFill, BsCheckCircleFill, BsTrophyFill, BsAwardFill, 
@@ -63,9 +64,6 @@ const Home = () => {
     const [alertMessage, setAlertMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     
-    // --- ESTADO PARA EL BUSCADOR DE PRODUCTOS ---
-    const [productSearchTerm, setProductSearchTerm] = useState('');
-    
     const [lowStockPage, setLowStockPage] = useState(0);
     const ITEMS_PER_PAGE = 5;
 
@@ -78,14 +76,12 @@ const Home = () => {
         }
         setSaleData({ product: '', quantity: 1, branch: initialBranchId, description: '' });
         setAlertMessage('');
-        setProductSearchTerm(''); // Limpiar buscador al abrir
         setShowSaleModal(true);
     };
 
     const handleCloseSaleModal = () => {
         setShowSaleModal(false);
         setAlertMessage('');
-        setProductSearchTerm(''); // Limpiar buscador al cerrar
     };
 
     const handleSaleFormChange = (e) => {
@@ -99,6 +95,12 @@ const Home = () => {
             setAlertMessage('');
         }
     };
+    
+    // Nuevo handler específico para react-select
+    const handleProductSelect = (selectedOption) => {
+        setSaleData(prev => ({...prev, product: selectedOption ? selectedOption.value : ''}));
+    };
+
 
     const handleCreateSale = async () => {
         if (!saleData.product) {
@@ -136,7 +138,6 @@ const Home = () => {
             setSuccessMessage('¡Venta registrada con éxito!');
             handleCloseSaleModal();
         } catch(error) {
-            console.log("La API devolvió un error al crear la venta.");
             const apiErrorMessage = error.response?.data?.detail || "Ocurrió un error en el servidor.";
             setAlertMessage(apiErrorMessage);
         }
@@ -223,24 +224,20 @@ const Home = () => {
         };
     }, [products, branchStock, movements, users, branches, loading, user]);
 
-    // --- LÓGICA DE FILTRADO DE PRODUCTOS (ACTUALIZADA) ---
-    const availableProductsForSale = useMemo(() => {
+    // Preparamos las opciones para react-select
+    const productOptions = useMemo(() => {
         if (!saleData.branch) return [];
         
         const stockInSelectedBranch = branchStock.filter(
             item => item.branch === parseInt(saleData.branch) && item.current_stock > 0
         );
         const availableProductIds = new Set(stockInSelectedBranch.map(item => item.product));
-        let availableProducts = products.filter(p => availableProductIds.has(p.id));
+        
+        return products
+            .filter(p => availableProductIds.has(p.id))
+            .map(p => ({ value: p.id, label: p.name }));
 
-        if (productSearchTerm) {
-            availableProducts = availableProducts.filter(p =>
-                p.name.toLowerCase().includes(productSearchTerm.toLowerCase())
-            );
-        }
-
-        return availableProducts;
-    }, [saleData.branch, branchStock, products, productSearchTerm]);
+    }, [saleData.branch, branchStock, products]);
 
     const formatCurrency = (number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(number);
 
@@ -396,27 +393,17 @@ const Home = () => {
                             )}
                         </Form.Group>
                         
-                        {/* --- FORMULARIO DE PRODUCTO CON BUSCADOR --- */}
                         <Form.Group className="mb-3">
                             <Form.Label>Producto</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="Buscar producto por nombre..."
-                                className="mb-2"
-                                value={productSearchTerm}
-                                onChange={(e) => setProductSearchTerm(e.target.value)}
+                            <Select
+                                options={productOptions}
+                                value={productOptions.find(option => option.value === saleData.product)}
+                                onChange={handleProductSelect}
+                                isDisabled={!saleData.branch}
+                                isClearable
+                                placeholder="Buscar y seleccionar un producto..."
+                                noOptionsMessage={() => "No se encontraron productos"}
                             />
-                            <Form.Select 
-                                name="product" 
-                                value={saleData.product} 
-                                onChange={handleSaleFormChange}
-                                disabled={!saleData.branch}
-                            >
-                                <option value="">
-                                    {availableProductsForSale.length > 0 ? "Selecciona un producto..." : "No se encontraron productos"}
-                                </option>
-                                {availableProductsForSale.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </Form.Select>
                         </Form.Group>
                         
                         <Form.Group className="mb-3">
