@@ -214,40 +214,64 @@
     color: #343a40;
 }
 
-/* --- Estilos Mejorados para la Paginación (CON COLORES DE LA MARCA) --- */
+/* --- ESTILOS PARA LA PAGINACIÓN (Estilo unificado tipo Productos) --- */
+
+/* Contenedor de la paginación */
+.movements-table-card .d-flex.justify-content-center {
+    border-top: 1px solid #e9ecef; 
+    background-color: #f8f9fa; /* Un fondo muy sutil */
+    padding: 1rem 1.5rem !important;
+
+    /* Redondeamos las esquinas inferiores para que coincida con la tarjeta */
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    margin: 0; /* Limpiamos márgenes */
+}
+
+/* Ajustes generales del componente */
 .pagination {
-    /* Variables de Bootstrap para colores consistentes */
-    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
-    --bs-pagination-disabled-bg: #f8f9fa;
-    --bs-pagination-disabled-border-color: #dee2e6;
-    --bs-pagination-disabled-color: #adb5bd;
-    gap: 0.5rem; /* Espacio entre los botones */
+    margin-bottom: 0; /* Quitar margen inferior por defecto de Bootstrap */
+    align-items: center; /* Alinear verticalmente texto y botones */
+    gap: 1rem; /* Espacio entre los elementos */
 }
 
-.pagination .page-item .page-link {
-    border-radius: 0.75rem !important; /* Bordes bien redondeados */
-    border: none;
-    background-color: #e9ecef;
-    color: #6c757d;
+/* Estilo para los botones (Anterior/Siguiente) */
+.pagination .page-item:not(.active) .page-link {
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    transition: all 0.2s ease;
+    border-radius: 0.5rem !important; /* Bordes redondeados */
+    padding: 0.4rem 0.8rem;
+    transition: all 0.2s ease-in-out;
+    color: #34495e;
+    border: 1px solid #dee2e6;
+    background-color: white; /* Fondo blanco para simular el "outline" */
 }
 
-/* ESTADO HOVER: Cambia a color primario */
+/* Efecto hover en los botones */
 .pagination .page-item:not(.active) .page-link:hover {
-    background-color: #3498db; /* Tu color azul primario */
-    color: white;
+    color: #fff;
+    background-color: #3498db;
+    border-color: #3498db;
 }
 
-/* ESTADO ACTIVO: Usa el color primario también */
+/* Estilo para el indicador de página "Página X de Y" */
 .pagination .page-item.active .page-link {
-    background-color: #3498db; /* Tu color azul primario */
-    color: white;
-    font-weight: 600;
+    /* El truco: hacemos que parezca texto plano */
+    background-color: transparent !important;
+    border-color: transparent !important;
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: none !important; /* Quitamos cualquier sombra */
 }
 
-/* Oculta los bordes feos al hacer foco */
-.pagination .page-item .page-link:focus {
-    box-shadow: var(--bs-pagination-focus-box-shadow);
+/* Evitamos el efecto hover en el texto */
+.pagination .page-item.active .page-link:hover {
+    color: #6c757d;
+}
+
+/* Estilo para botones deshabilitados */
+.pagination .page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: transparent;
+    border-color: #dee2e6;
 }
