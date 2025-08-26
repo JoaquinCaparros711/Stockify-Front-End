@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Row, Col, Button, Card, Dropdown, Table, Modal, Form, Spinner, Pagination } from 'react-bootstrap';
+import Select from 'react-select'; // <-- 1. IMPORTAMOS REACT-SELECT
 import { BsArrowDown, BsArrowUp, BsPlus, BsXCircleFill, BsCheckCircleFill, BsCalendarEvent } from 'react-icons/bs';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import './Movement.css';
 
-// --- Componentes de Notificación Estilo Apple ---
+// --- Componentes de Notificación (sin cambios) ---
 const AppleStyleAlert = ({ message, onClose }) => {
     if (!message) return null;
     return (
@@ -48,7 +49,6 @@ const Movements = () => {
     const [typeFilter, setTypeFilter] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
     
-    // --- Estados para la Paginación ---
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -85,10 +85,22 @@ const Movements = () => {
     };
 
     const handleFormChange = (e) => {
-        setNewMovementData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        // Si cambia el tipo de movimiento o sucursal, reseteamos el producto
+        if (name === 'movement_type' || name === 'branch') {
+             setNewMovementData(prev => ({ ...prev, product: '', [name]: value }));
+        } else {
+             setNewMovementData(prev => ({ ...prev, [name]: value }));
+        }
+
         if (alertMessage) {
             setAlertMessage('');
         }
+    };
+
+    // --- 2. NUEVO HANDLER PARA REACT-SELECT ---
+    const handleProductSelect = (selectedOption) => {
+        setNewMovementData(prev => ({...prev, product: selectedOption ? selectedOption.value : ''}));
     };
 
     const handleSaveChanges = async () => {
@@ -111,32 +123,43 @@ const Movements = () => {
     };
     
     const availableProducts = useMemo(() => {
-        if (!isEmployee) { return products; }
-        const employeeBranchId = user.branch;
         const movementType = newMovementData.movement_type;
-        if (!employeeBranchId || !movementType) { return []; }
-        if (movementType === 'incoming') { return products; }
-        if (movementType === 'outgoing') {
+        const branchId = newMovementData.branch;
+
+        // Para admins o movimientos de entrada, mostramos todos los productos.
+        if (user.role === 'admin' || movementType === 'incoming') {
+            return products;
+        }
+
+        // Para empleados en movimientos de salida, filtramos por stock en su sucursal.
+        if (user.role === 'employee' && movementType === 'outgoing') {
+            if (!branchId) return [];
             const productIdsInBranch = new Set(
                 branchStock
-                    .filter(stock => stock.branch === employeeBranchId && stock.current_stock > 0)
+                    .filter(stock => stock.branch === branchId && stock.current_stock > 0)
                     .map(stock => stock.product)
             );
             return products.filter(p => productIdsInBranch.has(p.id));
         }
-        return [];
-    }, [isEmployee, products, branchStock, user, newMovementData.movement_type]);
+
+        return []; // Por defecto, no mostrar productos si no se cumplen las condiciones
+    }, [user, products, branchStock, newMovementData.movement_type, newMovementData.branch]);
+    
+    // --- 3. ADAPTAMOS LOS PRODUCTOS PARA REACT-SELECT ---
+    const productOptions = useMemo(() => {
+        return availableProducts.map(p => ({
+            value: p.id,
+            label: p.name
+        }));
+    }, [availableProducts]);
 
     const displayMovements = useMemo(() => {
         if (loading || !Array.isArray(movements)) return [];
         return movements.map(mov => {
-            // --- Corrección de Fecha para evitar desfasaje por UTC ---
             let validDate = null;
             if (mov.date) {
                 const dateString = mov.date.split('.')[0].replace(' ', 'T');
                 const date = new Date(dateString);
-                
-                // Si la fecha es válida, la usamos. Esto maneja la fecha local correctamente.
                 if (!isNaN(date.getTime())) {
                     validDate = date;
                 }
@@ -148,22 +171,18 @@ const Movements = () => {
                 userName: mov.user_name || 'N/A',
                 parsedDate: validDate
             };
-        }).sort((a, b) => (b.parsedDate || 0) - (a.parsedDate || 0)); // Ordenar por fecha más reciente
+        }).sort((a, b) => (b.parsedDate || 0) - (a.parsedDate || 0));
     }, [movements, loading]);
 
     const filteredMovements = useMemo(() => {
-        setCurrentPage(1); // Reiniciar a la página 1 cada vez que cambian los filtros
+        setCurrentPage(1);
         return displayMovements.filter(mov => {
             const typeMatch = typeFilter === 'all' || mov.movement_type === typeFilter;
-            
-            // Ajuste en la comparación de fechas para ser más robusto
             const dateMatch = !dateFilter || (mov.parsedDate && mov.parsedDate.toLocaleDateString('sv-SE') === dateFilter);
-
             return typeMatch && dateMatch;
         });
     }, [displayMovements, typeFilter, dateFilter]);
 
-    // Lógica para calcular la página actual
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredMovements.slice(indexOfFirstItem, indexOfLastItem);
@@ -206,7 +225,6 @@ const Movements = () => {
                                         <button className="clear-date-btn" onClick={() => setDateFilter('')}>&times;</button>
                                     )}
                                 </div>
-
                                 <Dropdown onSelect={(eventKey) => setTypeFilter(eventKey)}>
                                     <Dropdown.Toggle variant="light" id="dropdown-type">
                                         Filtrar: {typeFilter === 'all' ? 'Todos' : (typeFilter === 'incoming' ? 'Entradas' : 'Salidas')}
@@ -292,15 +310,21 @@ const Movements = () => {
                                 <option value="outgoing">Salida</option>
                             </Form.Select>
                         </Form.Group>
+
+                        {/* --- 4. REEMPLAZAMOS EL SELECTOR ANTIGUO POR EL NUEVO --- */}
                         <Form.Group className="mb-3">
                             <Form.Label>Producto</Form.Label>
-                            <Form.Select name="product" value={newMovementData.product} onChange={handleFormChange} disabled={!newMovementData.movement_type && isEmployee}>
-                                <option value="">
-                                    {!newMovementData.movement_type && isEmployee ? "Selecciona un tipo primero" : "Selecciona un producto..."}
-                                </option>
-                                {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </Form.Select>
+                            <Select
+                                options={productOptions}
+                                value={productOptions.find(option => option.value === newMovementData.product)}
+                                onChange={handleProductSelect}
+                                isDisabled={!newMovementData.movement_type || !newMovementData.branch}
+                                isClearable
+                                placeholder="Buscar y seleccionar un producto..."
+                                noOptionsMessage={() => "No hay productos disponibles"}
+                            />
                         </Form.Group>
+
                         <Form.Group className="mb-3">
                             <Form.Label>Sucursal</Form.Label>
                             <Form.Select name="branch" value={newMovementData.branch} onChange={handleFormChange} disabled={isEmployee}>
