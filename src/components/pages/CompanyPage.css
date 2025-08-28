@@ -1,26 +1,132 @@
+/* --- ANIMACIÓN DE ENTRADA (Igual a Products.css) --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .company-page-container {
+    padding: 2rem; /* Añadimos padding para que no esté pegado a los bordes */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- ESTILOS DE CABECERA (Igual a Products.css) --- */
+.page-header {
+    margin-bottom: 2.5rem;
+}
+.page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #142331;
+}
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+
+/* --- ESTILOS PARA LA TARJETA PRINCIPAL --- */
+.company-card {
+    border: none;
+    border-radius: 0.75rem;
+    overflow: hidden; /* Para que el header redondeado funcione */
+}
+
+.company-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.company-card-header h5 {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.company-card .card-body {
     padding: 2rem;
 }
 
-.company-card {
+/* Botón de editar, similar al de "Agregar Producto" */
+.btn-edit-company {
+    background-color: #3498db;
     border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-radius: 12px;
+    border-radius: 0.5rem;
+    padding: 0.6rem 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.btn-edit-company:hover {
+    background-color: #34495e;
 }
 
-.company-card .card-header {
+
+/* --- ESTILOS PARA EL FORMULARIO (Igual a los modales de Products) --- */
+.form-label {
+    font-weight: 500;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border-radius: 0.75rem;
     background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
 }
 
+.form-control:focus,
+.form-select:focus {
+    background-color: #ffffff;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+}
+
+/* Estilo para los campos deshabilitados */
 .form-control:disabled {
     background-color: #e9ecef;
     opacity: 0.8;
 }
 
-.apple-style-alert-page {
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+/* --- ESTILOS PARA NOTIFICACIONES (Copiados de Products.css para consistencia) --- */
+/* (Aquí irían los estilos de .apple-style-alert y .apple-style-toast. 
+Si tienes un CSS global, puedes ponerlos allí. Si no, cópialos aquí desde el CSS de Products) */
+
+@keyframes slideDownFadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
+.apple-style-alert {
+    background-color: #ff3b3020; color: #ff3b30; border: 1px solid #ff3b3050;
+    border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem;
+    display: flex; align-items: center; font-weight: 500; animation: slideDownFadeIn 0.3s ease-out;
+}
+.apple-style-alert .alert-icon { font-size: 1.2rem; margin-right: 0.75rem; }
+.apple-style-alert .close-alert-btn {
+    background: none; border: none; color: #ff3b30; font-size: 1.5rem; margin-left: auto;
+    padding: 0 0.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+}
+.apple-style-alert .close-alert-btn:hover { opacity: 1; }
+
+@keyframes fadeInToast {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.apple-style-toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    padding: 1rem 1.5rem; border-radius: 12px; display: flex; align-items: center;
+    font-weight: 500; z-index: 2000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: fadeInToast 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.apple-style-toast.success { background-color: #34c759; color: white; }
+.apple-style-toast .toast-icon { font-size: 1.2rem; margin-right: 0.75rem; }

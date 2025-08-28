@@ -19,6 +19,7 @@ import Users from './components/pages/Users';
 import { DataProvider } from './context/DataContext';
 import PublicRoute from './components/PublicRoute';
 import Reportes from './components/Reportes';
+import CompanyPage from './components/pages/CompanyPage';
 
 function App() {
   return (
