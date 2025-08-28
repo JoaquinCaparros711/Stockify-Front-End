@@ -2,7 +2,7 @@ import { FaHome } from "react-icons/fa";
 import { MdOutlineProductionQuantityLimits, MdOutlineAddHomeWork, MdMoveUp } from "react-icons/md";
 import { AiOutlineStock } from "react-icons/ai";
 import { HiOutlineUserAdd } from "react-icons/hi";
-import { BsFileEarmarkText, BsBuilding, BsBoxSeam, BsGraphUp, BsBoxArrowLeft } from 'react-icons/bs';
+import { BsFileEarmarkText, BsBuilding, BsBoxArrowLeft } from 'react-icons/bs';
 
 
 export const sidebarItems = [

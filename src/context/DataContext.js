@@ -151,6 +151,15 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    const fetchCompany = async () => {
+        try {
+            const response = await api.get(`/control/model/company/${user.company.id}/`);
+            setCompany(response.data);
+        } catch (error) {
+            console.error("Error al cargar los datos de la empresa:", error);
+        }
+    };
+
 
     useEffect(() => {
         const loadAllData = async () => {
@@ -162,7 +171,8 @@ export const DataProvider = ({ children }) => {
                     fetchMovements(),
                     fetchBranchStock(),
                     fetchBranches(),
-                    fetchUsers()
+                    fetchUsers(),
+                    fetchCompany(),
                 ];
                 
                 if (user.role === 'admin') {
@@ -209,15 +219,6 @@ export const DataProvider = ({ children }) => {
             console.error("Error al eliminar el usuario:", error.response?.data);
             alert("Error: " + JSON.stringify(error.response?.data));
             throw error;
-        }
-    };
-
-    const fetchCompany = async () => {
-        try {
-            const response = await api.get(`/control/model/company/${user.company.id}/`);
-            setCompany(response.data);
-        } catch (error) {
-            console.error("Error al cargar los datos de la empresa:", error);
         }
     };
 
