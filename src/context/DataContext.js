@@ -151,17 +151,18 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const fetchCompany = async () => {
-        try {
-            const response = await api.get(`/control/model/company/${user.company.id}/`);
-            setCompany(response.data);
-        } catch (error) {
-            console.error("Error al cargar los datos de la empresa:", error);
-        }
-    };
-
 
     useEffect(() => {
+
+        const fetchCompany = async () => {
+            try {
+                const response = await api.get(`/control/model/company/${user.company.id}/`);
+                setCompany(response.data);
+            } catch (error) {
+                console.error("Error al cargar los datos de la empresa:", error);
+            }
+        };
+
         const loadAllData = async () => {
             if (!user) return;
             setLoading(true);
@@ -172,7 +173,6 @@ export const DataProvider = ({ children }) => {
                     fetchBranchStock(),
                     fetchBranches(),
                     fetchUsers(),
-                    fetchCompany(),
                 ];
                 
                 if (user.role === 'admin') {
