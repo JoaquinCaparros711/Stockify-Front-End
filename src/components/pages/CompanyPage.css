@@ -1,0 +1,26 @@
+.company-page-container {
+    padding: 2rem;
+}
+
+.company-card {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+}
+
+.company-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.form-control:disabled {
+    background-color: #e9ecef;
+    opacity: 0.8;
+}
+
+.apple-style-alert-page {
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}

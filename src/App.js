@@ -41,6 +41,7 @@ function App() {
               <Route path="sucursales" element={<Branchs />} />
               <Route path="usuarios" element={<Users />} />
               <Route path="reportes" element={<Reportes />} />
+              <Route path="empresa" element={<CompanyPage />} />
             </Route>
           </Routes>
         </DataProvider>
