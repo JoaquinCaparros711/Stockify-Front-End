@@ -51,7 +51,8 @@ const Products = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState({ name: '', description: '', price: '', category: '' });
 
-    const [alertMessage, setAlertMessage] = useState('');
+    const [alertMessage, setAlertMessage] = useState(''); // Errores para el modal
+    const [mainPageError, setMainPageError] = useState(''); // <-- CAMBIO AQUÍ: Nuevo estado para errores en la página principal
     const [successMessage, setSuccessMessage] = useState('');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
@@ -79,6 +80,7 @@ const Products = () => {
     };
 
     const handleSaveChanges = async () => {
+        // Validación del nombre
         const trimmedName = formData.name.trim();
         if (!trimmedName) return setAlertMessage('El nombre del producto es obligatorio.');
         if (/^\d+$/.test(trimmedName)) return setAlertMessage('El nombre no puede consistir solo en números.');
@@ -88,6 +90,11 @@ const Products = () => {
         );
         if (isNameDuplicate) return setAlertMessage('Ya existe un producto con este nombre.');
 
+        // <-- CAMBIO AQUÍ: Validación de categoría
+        const trimmedCategory = formData.category.trim();
+        if (!trimmedCategory) return setAlertMessage('La categoría del producto es obligatoria.');
+
+        // Validación del precio
         const price = parseFloat(formData.price);
         if (isNaN(price) || price <= 0) return setAlertMessage('El precio debe ser un número mayor a cero.');
 
@@ -122,7 +129,8 @@ const Products = () => {
             await deleteProduct(productToDelete.id);
             setSuccessMessage('¡Producto eliminado con éxito!');
         } catch {
-            alert('Hubo un error al eliminar el producto.');
+            // <-- CAMBIO AQUÍ: Usamos el nuevo estado en lugar del alert() feo
+            setMainPageError('Hubo un error al eliminar el producto.');
         } finally {
             handleCloseDeleteConfirm();
         }
@@ -161,6 +169,7 @@ const Products = () => {
     return (
         <Container fluid className="products-container">
         <AppleStyleSuccessToast message={successMessage} onClose={() => setSuccessMessage('')} />
+        <AppleStyleAlert message={mainPageError} onClose={() => setMainPageError('')} />
 
         <header className="d-flex align-items-center justify-content-between page-header">
             <div>
@@ -240,7 +249,6 @@ const Products = () => {
             </tbody>
             </Table>
 
-            {/* Paginación con flechitas */}
             <div className="d-flex justify-content-between align-items-center p-3">
             <Button
                 variant="outline-primary"
@@ -262,7 +270,6 @@ const Products = () => {
             </div>
         </Card>
 
-        {/* Modal Crear/Editar */}
         <Modal show={showModal} onHide={handleCloseModal} centered>
             <Modal.Header closeButton>
             <Modal.Title>{editingProduct ? 'Editar Producto' : 'Agregar Nuevo Producto'}</Modal.Title>
@@ -272,7 +279,7 @@ const Products = () => {
             <Form>
                 <Form.Group className="mb-3">
                 <Form.Label>Nombre</Form.Label>
-                <Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} />
+                <Form.Control type="text" name="name" value={formData.name} onChange={handleFormChange} required/>
                 </Form.Group>
                 <Form.Group className="mb-3">
                 <Form.Label>Descripción</Form.Label>
@@ -282,13 +289,13 @@ const Products = () => {
                 <Col>
                     <Form.Group className="mb-3">
                     <Form.Label>Categoría</Form.Label>
-                    <Form.Control type="text" name="category" value={formData.category} onChange={handleFormChange} />
+                    <Form.Control type="text" name="category" value={formData.category} onChange={handleFormChange} required/>
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group className="mb-3">
                     <Form.Label>Precio</Form.Label>
-                    <Form.Control type="number" name="price" value={formData.price} onChange={handleFormChange} />
+                    <Form.Control type="number" name="price" value={formData.price} onChange={handleFormChange} required/>
                     </Form.Group>
                 </Col>
                 </Row>
@@ -300,7 +307,6 @@ const Products = () => {
             </Modal.Footer>
         </Modal>
 
-        {/* Modal Eliminar */}
         <Modal show={showDeleteConfirm} onHide={handleCloseDeleteConfirm} centered>
             <Modal.Header closeButton>
             <Modal.Title>
