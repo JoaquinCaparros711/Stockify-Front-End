@@ -113,9 +113,14 @@ const SideBar = () => {
     
     try {
         const payload = { name: trimmedName, email: trimmedEmail };
+        
+        // --- CORRECCIÓN APLICADA AQUÍ ---
+        // Si el usuario proveyó una contraseña, envía ambos campos al backend.
         if (password) {
             payload.password = password;
+            payload.password2 = confirmPassword; // Se envía el campo de confirmación que el backend espera.
         }
+
         await updateProfile(user.id, payload);
         setSuccessMessage("¡Perfil actualizado con éxito!");
         handleCloseProfileModal();
